@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generator LI - Serverless Kresna AI</title>
+    <title>Dashboard Admin - Intelkam LI Generator</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.7/pizzip.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.49.1/docxtemplater.js"></script>
@@ -29,8 +29,8 @@
             min-height: 100vh;
         }
         .container {
-            width: 90%;
-            max-width: 800px;
+            width: 95%;
+            max-width: 500px;
             background: var(--panel-dark);
             padding: 30px;
             border-radius: 16px;
@@ -45,10 +45,11 @@
             background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-size: 24px;
         }
         textarea {
             width: 100%;
-            height: 200px;
+            height: 250px;
             background: #070b14;
             border: 1px solid #222f54;
             border-radius: 8px;
@@ -74,9 +75,8 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 15px;
             transition: all 0.3s ease;
-            text-shadow: 0 0 2px rgba(255,255,255,0.5);
             margin-top: 15px;
         }
         .btn-neon:hover {
@@ -103,12 +103,14 @@
             display: inline-block;
             background: #00e676;
             color: #000;
-            padding: 10px 25px;
-            border-radius: 5px;
+            padding: 12px 30px;
+            border-radius: 6px;
             text-decoration: none;
             font-weight: bold;
             margin-top: 10px;
             transition: 0.2s;
+            text-transform: uppercase;
+            font-size: 14px;
         }
         .btn-download:hover {
             box-shadow: 0 0 15px #00e676;
@@ -118,64 +120,47 @@
 <body>
 
 <div class="container">
-    <h2><i class="fas fa-robot"></i> Generator LI Kresna AI</h2>
-    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:13px;">Versi Serverless Cloud - Berjalan 100% di Browser</p>
+    <h2><i class="fas fa-terminal"></i> IMPORT FORMAT AI</h2>
+    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Versi Cloud Website - Proses Aman Langsung di Browser</p>
     
-    <label style="font-weight: bold; display: block; margin-bottom: 8px;">Tempel Narasi Kresna AI Di Sini:</label>
-    <textarea id="narasiInput" placeholder="Sistem akan otomatis memotong teks dan mengambil komponen mulai dari kata 'Bidang : ' ..."></textarea>
+    <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Tempel hasil analisis dari KRESNA AI di bawah ini:</p>
+    <textarea id="narasiInput" placeholder="[6/22/2026 5:39 PM] KRESNA AI: Bidang : SOSBUD..."></textarea>
     
     <button class="btn-neon" onclick="generateDocument()">
-        <i class="fas fa-cog"></i> JALANKAN GENERATOR
+        <i class="fas fa-file-invoice"></i> GENERATE LAPORAN
     </button>
     
     <div class="loading" id="loading">
-        <i class="fas fa-spinner fa-spin"></i> Sedang memproses dokumen di browser Anda...
+        <i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word...
     </div>
     
     <div class="result-box" id="resultBox">
         <i class="fas fa-check-circle fa-3x" style="color: #00e676; margin-bottom:10px;"></i>
-        <h3>Proses Berhasil!</h3>
-        <p style="color: #a0aec0; font-size: 14px; margin-top:-10px;">Dokumen Anda telah selesai dirakit secara instan.</p>
+        <h3>GENERATE BERHASIL!</h3>
+        <p style="color: #a0aec0; font-size: 13px; margin-top:-10px; margin-bottom: 20px;">Dokumen Laporan Informasi siap diunduh.</p>
         <a id="linkDownloadDocx" href="#" class="btn-download">
-            <i class="fas fa-file-word"></i> UNDUH DOKUMEN (DOCX)
+            <i class="fas fa-file-word"></i> DOWNLOAD DOCX
         </a>
     </div>
 </div>
 
 <script>
 function bersihkanDanUraiKresna(text) {
-    // Cari letak baris kata "Bidang :" terakhir
     let textClean = text;
     const bidangRegex = /\bBidang\s*:/g;
-    let match;
-    let lastIdx = -1;
-    while ((match = bidangRegex.exec(text)) !== null) {
-        lastIdx = match.index;
-    }
-    if (lastIdx !== -1) {
-        textClean = text.substring(lastIdx);
-    }
+    let match, lastIdx = -1;
+    while ((match = bidangRegex.exec(text)) !== null) { lastIdx = match.index; }
+    if (lastIdx !== -1) { textClean = text.substring(lastIdx); }
     
-    // Hilangkan prefix bot AI
-    textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '');
-    textClean = textClean.replace(/KRESNA AI:\s*/g, '');
-    
+    textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};
     
-    // GENERATE WAKTU REALTIME SISTEM
     const now = new Date();
     const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     
-    const hariIni = hariList[now.getDay()];
-    const tgl = now.getDate();
-    const bln = bulanList[now.getMonth() + 1];
-    const thn = now.getFullYear();
-    const jam = String(now.getHours()).padStart(2, '0');
-    const menit = String(now.getMinutes()).padStart(2, '0');
-    
-    data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
-    data['TANGGAL_TTD'] = `${tgl} ${bln} ${thn}`;
+    data['WAKTU'] = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()} Pukul ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')} WIB`;
+    data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
     
     function ambilPola(regex, src) {
         const m = src.match(regex);
@@ -211,7 +196,6 @@ function bersihkanDanUraiKresna(text) {
         const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
         for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
     }
-    
     return data;
 }
 
@@ -223,29 +207,22 @@ async function generateDocument() {
     document.getElementById('resultBox').style.display = 'none';
     
     try {
-        // Fetch format_original.docx langsung dari github pages tempat berkas ini berada
+        // Mengambil file template word langsung dari repositori GitHub Pages Anda
         const response = await fetch('./format_original.docx');
-        if (!response.ok) throw new Error("Gagal mengunduh berkas 'format_original.docx' dari server GitHub.");
+        if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan di repositori GitHub Anda.");
         const arrayBuffer = await response.arrayBuffer();
         
-        // Ekstrak data teks pelaporan
         const dataKomponen = bersihkanDanUraiKresna(text);
-        
-        // Load berkas zip menggunakan PizZip
         const zip = new PizZip(arrayBuffer);
-        
-        // Inisialisasi engine docxtemplater dengan aturan pembatas tag {{ }}
         const doc = new window.docxtemplater(zip, {
             delimiters: { start: "{{", end: "}}" },
             paragraphLoop: true,
             linebreaks: true
         });
         
-        // Suntikkan data
         doc.setData(dataKomponen);
         doc.render();
         
-        // Compile menjadi Blob file Word kembali
         const out = doc.getZip().generate({
             type: "blob",
             mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -254,7 +231,6 @@ async function generateDocument() {
         document.getElementById('loading').style.display = 'none';
         document.getElementById('resultBox').style.display = 'block';
         
-        // Konfigurasi tombol unduh agar memicu simpan file lokal browser
         const downloadBtn = document.getElementById('linkDownloadDocx');
         const newDownloadBtn = downloadBtn.cloneNode(true);
         downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
@@ -265,7 +241,7 @@ async function generateDocument() {
         });
         
     } catch (error) {
-        alert("Terjadi Kendala: " + error.message);
+        alert("Terjadi Kesalahan: " + error.message);
         document.getElementById('loading').style.display = 'none';
     }
 }

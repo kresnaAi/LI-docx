@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Intelkam LI Generator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* NEON CSS STYLING */
+        :root {
+            --bg-color: #0d0f12;
+            --panel-bg: #15181f;
+            --neon-blue: #00f3ff;
+            --neon-purple: #b026ff;
+            --text-main: #e0e6ed;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .panel:hover {
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.3);
+            border: 1px solid var(--neon-blue);
+        }
+        h2 {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        /* STYLING TAMBAHAN UNTUK INPUT LOKASI PENYIMPANAN */
+        input[type="text"] {
+            width: 100%;
+            background: #0a0c0e;
+            border: 1px solid #333;
+            color: #00f3ff;
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2) inset;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            background: #0a0c0e;
+            border: 1px solid #333;
+            color: #00f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            resize: none;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2) inset;
+        }
+        .btn-neon {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 15px;
+            transition: 0.3s;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2) inset, 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+        .btn-neon:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px var(--neon-blue) inset, 0 0 20px var(--neon-blue);
+        }
+        .btn-purple {
+            color: var(--neon-purple);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 10px rgba(176, 38, 255, 0.2) inset, 0 0 10px rgba(176, 38, 255, 0.2);
+        }
+        .btn-purple:hover {
+            background: var(--neon-purple);
+            box-shadow: 0 0 20px var(--neon-purple) inset, 0 0 20px var(--neon-purple);
+        }
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2><i class="fas fa-terminal"></i> Import Format AI</h2>
+        
+        <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px dashed rgba(0, 243, 255, 0.15);">
+            <label style="display: block; font-size: 13px; letter-spacing: 1px; color: var(--text-main); margin-bottom: 8px; font-weight: bold;">
+                <i class="fas fa-folder-open" style="color: var(--neon-blue);"></i> LOKASI PENYIMPANAN OTOMATIS:
+            </label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="storagePath" placeholder="Contoh: C:\Users\Intel\Documents\Laporan_LI">
+                <button class="btn-neon" onclick="saveStoragePath()" style="margin-top: 0; width: auto; padding: 10px 20px; font-size: 13px;">
+                    <i class="fas fa-save"></i> Simpan
+                </button>
+            </div>
+            <small id="pathNotif" style="display: none; color: #00ff00; font-size: 11px; margin-top: 6px; text-shadow: 0 0 5px #00ff00;">
+                ✓ Konfigurasi folder berhasil disinkronkan ke sistem browser!
+            </small>
+        </div>
+
+        <p>Tempel hasil analisis dari KRESNA AI di bawah ini:</p>
+        <textarea id="narasiInput" placeholder="[6/22/2026 5:39 PM] KRESNA AI: Bidang : SOSBUD..."></textarea>
+        <button class="btn-neon" onclick="generateDocument()"><i class="fas fa-magic"></i> Generate Laporan</button>
+    </div>
+
+    <div class="panel">
+        <h2><i class="fas fa-file-alt"></i> Hasil Generate</h2>
+        <p>Dokumen Laporan Informasi siap diunduh.</p>
+        
+        <div id="loading" style="display:none; text-align:center; color: var(--neon-blue); margin-top:50px;">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <p>Memproses XML dan mem-packing DOCX...</p>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <i class="fas fa-check-circle fa-4x" style="color: #00ff00; text-shadow: 0 0 15px #00ff00; margin-bottom:20px;"></i>
+            <h3>Generate Berhasil!</h3>
+            <p style="font-size: 12px; color: #a0aec0; margin-top: -10px; margin-bottom: 20px;">File juga otomatis disalin ke folder PC tujuan Anda.</p>
+            <div style="display:flex; gap: 15px; margin-top:20px;">
+                <a href="/download/docx" class="btn-neon" style="text-decoration: none; text-align: center;">
+                 <i class="fas fa-file-word"></i> Download DOCX
+                </a>
+                <a href="/download/pdf" class="btn-neon btn-purple" style="text-decoration: none; text-align: center;">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                 </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Memuat konfigurasi folder secara otomatis saat halaman web dibuka
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedPath = localStorage.getItem("customStoragePath");
+        if (savedPath) {
+            document.getElementById("storagePath").value = savedPath;
+        }
+    });
+
+    // Menyimpan konfigurasi path ke localStorage
+    function saveStoragePath() {
+        const pathValue = document.getElementById("storagePath").value.trim();
+        localStorage.setItem("customStoragePath", pathValue);
+        
+        const notif = document.getElementById("pathNotif");
+        notif.style.display = "block";
+        setTimeout(() => { notif.style.display = "none"; }, 3000);
+    }
+
+    async function generateDocument() {
+        const text = document.getElementById('narasiInput').value;
+        if(!text) return alert("Harap masukkan narasi terlebih dahulu.");
+
+        // Membaca path penyimpanan dari localStorage untuk dikirim ke API
+        const savedPath = localStorage.getItem("customStoragePath") || "";
+
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('resultBox').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                // UPGRADE: Menyertakan parameter storage_path ke server Flask
+                body: JSON.stringify({
+                    text: text,
+                    storage_path: savedPath
+                })
+            });
+            const data = await response.json();
+            
+            document.getElementById('loading').style.display = 'none';
+            if(data.status === 'success') {
+                document.getElementById('resultBox').style.display = 'block';
+            } else {
+                alert("Error: " + data.message);
+            }
+        } catch (error) {
+            alert("Koneksi ke server gagal!");
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

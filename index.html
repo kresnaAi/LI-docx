@@ -6,42 +6,259 @@
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
     <style>
+        :root {
+            --bg-dark: #0a0f1d;
+            --panel-dark: #131a30;
+            --neon-blue: #00f2fe;
+            --neon-purple: #4facfe;
+            --text-light: #e2e8f0;
+        }
         body { font-family: sans-serif; background: #0a0f1d; color: white; padding: 20px; text-align: center; }
-        textarea { width: 100%; max-width: 500px; height: 250px; background: #070b14; color: white; border: 1px solid #00f2fe; padding: 10px; }
-        button { padding: 15px 30px; margin-top: 20px; cursor: pointer; background: #00f2fe; border: none; font-weight: bold; border-radius: 8px; }
+        textarea { width: 100%; max-width: 500px; height: 200px; }
+        button { padding: 15px 30px; margin-top: 20px; cursor: pointer; background: #00f2fe; border: none; font-weight: bold; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 95%;
+            max-width: 500px;
+            background: var(--panel-dark);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+        }
+        textarea {
+            width: 100%;
+            height: 250px;
+            background: #070b14;
+            border: 1px solid #222f54;
+            border-radius: 8px;
+            color: #fff;
+            padding: 15px;
+            box-sizing: border-box;
+            font-size: 14px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+        .btn-neon {
+            display: block;
+            width: 100%;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            color: #000;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        .btn-neon:hover {
+            box-shadow: 0 0 20px var(--neon-blue);
+            transform: translateY(-2px);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+            color: var(--neon-blue);
+        }
+        .result-box {
+            display: none;
+            text-align: center;
+            background: #0d1527;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px dashed var(--neon-blue);
+            margin-top: 20px;
+        }
+        .btn-download {
+            display: inline-block;
+            background: #00e676;
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: 0.2s;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        .btn-download:hover {
+            box-shadow: 0 0 15px #00e676;
+        }
     </style>
 </head>
 <body>
-    <h2>GENERATOR LAPORAN (FIXED)</h2>
-    <textarea id="narasiInput" placeholder="Tempel narasi dari Kresna AI..."></textarea><br>
-    <button onclick="generateDocument()">GENERATE LAPORAN</button>
 
-    <script>
-        async function generateDocument() {
-            const text = document.getElementById('narasiInput').value;
-            const now = new Date();
-            const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-            const bulanList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            const tanggalSekarang = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()]} ${now.getFullYear()}`;
+<div class="container">
+    <h2><i class="fas fa-terminal"></i> MASUKAN HASIL LI DARI KRESNA AI</h2>
+    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Versi Cloud Website - Tanpa Server & Ngrok</p>
+    
+    <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Tempel hasil analisis dari KRESNA AI di bawah ini:</p>
+    <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
+    
+    <button class="btn-neon" onclick="generateDocument()">
+        <i class="fas fa-file-invoice"></i> GENERATE LAPORAN
+    </button>
+    
+    <div class="loading" id="loading">
+        <i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word di Browser...
+    </div>
+    
+    <div class="result-box" id="resultBox">
+        <i class="fas fa-check-circle fa-3x" style="color: #00e676; margin-bottom:10px;"></i>
+        <h3>GENERATE BERHASIL!</h3>
+        <p style="color: #a0aec0; font-size: 13px; margin-top:-10px; margin-bottom: 20px;">Dokumen Laporan Informasi siap diunduh.</p>
+        <a id="linkDownloadDocx" href="#" class="btn-download">
+            <i class="fas fa-file-word"></i> DOWNLOAD DOCX
+        </a>
+    </div>
+</div>
 
-            try {
-                const response = await fetch('./format_original.docx');
-                const arrayBuffer = await response.arrayBuffer();
-                const zip = new PizZip(arrayBuffer);
-                const doc = new window.docxtemplater(zip, {delimiters: {start: '{{', end: '}}'}});
-                
-                // Data yang akan mengisi placeholder di Word
-                doc.setData({
-                    WAKTU: tanggalSekarang, // Ini akan mengganti {{WAKTU}} di Word
-                    BIDANG: text.match(/Bidang\s*:\s*(.*)/)?.[1] || "Data tidak ditemukan"
-                });
-                doc.render();
-                
-                const out = doc.getZip().generate({type: "blob"});
-                window.saveAs(out, "Laporan_Hasil.docx");
-            } catch (e) { alert("Error: " + e.message); }
+<script>
+function bersihkanDanUraiKresna(text) {
+    let textClean = text;
+    const bidangRegex = /\bBidang\s*:/g;
+    let match, lastIdx = -1;
+    while ((match = bidangRegex.exec(text)) !== null) { lastIdx = match.index; }
+    if (lastIdx !== -1) { textClean = text.substring(lastIdx); }
+    
+    textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
+    const data = {};
+    
+    const now = new Date();
+    // Tambahkan array Hari dalam Bahasa Indonesia
+    const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // Gunakan template string untuk menggabungkan Hari + Tanggal
+    const hariIni = hariList[now.getDay()];
+    const tgl = now.getDate();
+    const bln = bulanList[now.getMonth() + 1];
+    const thn = now.getFullYear();
+    const jam = String(now.getHours()).padStart(2, '0');
+    const menit = String(now.getMinutes()).padStart(2, '0');
+    
+    data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
+    
+    
+    data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
+    
+    function ambilPola(regex, src) {
+        const m = src.match(regex);
+        return m ? m[1].trim() : "";
+    }
+
+    
+    
+    data['BIDANG'] = ambilPola(/Bidang\s*:\s*(.*)/, textClean);
+    data['PERIHAL'] = ambilPola(/Perihal\s*:\s*(.*)/, textClean);
+    data['SUMBER'] = ambilPola(/A\.\s*Sumber Informasi\s*:\s*(.*)/, textClean);
+    data['HUBUNGAN'] = ambilPola(/B\.\s*Hubungan dengan Sumber\s*:\s*(.*)/, textClean);
+    data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
+    data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
+    
+    const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
+    if (faktaBlock) {
+        data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
+        data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
+        data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
+    } else {
+        data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
+    }
+    
+    const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
+    if (pendapatBlock) {
+        const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        for (let i = 0; i < abjad.length; i++) {
+            const char = abjad[i];
+            const nextChar = abjad[i+1];
+            const reg = nextChar ? new RegExp(`${char}\\.\\s*([\\s\\S]*?)(?=${nextChar}\\.\\s*|$)`) : new RegExp(`${char}\\.\\s*([\\s\\S]*)`);
+            data[`PENDAPAT_${char}`] = ambilPola(reg, pendapatBlock);
         }
-    </script>
+    } else {
+        const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
+    }
+    return data;
+}
+
+async function generateDocument() {
+    const text = document.getElementById('narasiInput').value;
+    if(!text) return alert("Harap masukkan narasi terlebih dahulu.");
+    
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultBox').style.display = 'none';
+    
+    try {
+        const response = await fetch('./format_original.docx');
+        if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
+        const arrayBuffer = await response.arrayBuffer();
+        
+        const dataKomponen = bersihkanDanUraiKresna(text);
+        const zip = new PizZip(arrayBuffer);
+        const doc = new window.docxtemplater(zip, {
+            delimiters: { start: "{{", end: "}}" },
+            paragraphLoop: true,
+            linebreaks: true
+        });
+        
+        doc.setData(dataKomponen);
+        doc.render();
+        
+        const out = doc.getZip().generate({
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultBox').style.display = 'block';
+        
+        const downloadBtn = document.getElementById('linkDownloadDocx');
+        const newDownloadBtn = downloadBtn.cloneNode(true);
+        downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+        
+        newDownloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.saveAs(out, "Laporan_Informasi_Kresna.docx");
+        });
+        
+    } catch (error) {
+        alert("Terjadi Kesalahan: " + error.message);
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+</script>
+
 </body>
 </html>

@@ -156,11 +156,28 @@
 
 <script>
 function bersihkanDanUraiKresna(text) {
+    const data = {};
     let textClean = text;
     const bidangRegex = /\bBidang\s*:/g;
     let match, lastIdx = -1;
     while ((match = bidangRegex.exec(text)) !== null) { lastIdx = match.index; }
     if (lastIdx !== -1) { textClean = text.substring(lastIdx); }
+
+    // Logika Pintar: Hanya ambil jika ada isinya
+    function ambilPola(regex, src) {
+        const m = src.match(regex);
+        return m && m[1].trim() !== "" ? m[1].trim() : null; // Return null jika kosong
+    }
+
+    // Contoh pengambilan FAKTA
+    const faktaA = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
+    data['FAKTA_A'] = faktaA || "";
+
+    // Untuk angka urutan, gunakan regex yang lebih spesifik
+    // Jika tidak ada angka 1, 2, 3 setelah huruf, maka biarkan kosong
+    data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock) || "";
+
+    return data;
     
     textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};

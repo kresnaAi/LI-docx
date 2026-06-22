@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin - Intelkam LI Generator</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-   <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
-<script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
-<script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     
     <style>
         :root {
@@ -121,17 +121,17 @@
 
 <div class="container">
     <h2><i class="fas fa-terminal"></i> IMPORT FORMAT AI</h2>
-    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Versi Cloud Website - Proses Aman Langsung di Browser</p>
+    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Versi Cloud Website - Tanpa Server & Ngrok</p>
     
     <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Tempel hasil analisis dari KRESNA AI di bawah ini:</p>
-    <textarea id="narasiInput" placeholder="[6/22/2026 5:39 PM] KRESNA AI: Bidang : SOSBUD..."></textarea>
+    <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
     
     <button class="btn-neon" onclick="generateDocument()">
         <i class="fas fa-file-invoice"></i> GENERATE LAPORAN
     </button>
     
     <div class="loading" id="loading">
-        <i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word...
+        <i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word di Browser...
     </div>
     
     <div class="result-box" id="resultBox">
@@ -180,7 +180,7 @@ function bersihkanDanUraiKresna(text) {
         data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
         data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
     } else {
-        data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
+        data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
     }
     
     const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
@@ -207,9 +207,8 @@ async function generateDocument() {
     document.getElementById('resultBox').style.display = 'none';
     
     try {
-        // Mengambil file template word langsung dari repositori GitHub Pages Anda
         const response = await fetch('./format_original.docx');
-        if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan di repositori GitHub Anda.");
+        if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
         const arrayBuffer = await response.arrayBuffer();
         
         const dataKomponen = bersihkanDanUraiKresna(text);

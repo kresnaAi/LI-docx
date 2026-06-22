@@ -156,20 +156,24 @@ function bersihkanDanUraiKresna(text) {
     textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};
     
-    const now = new Date();
-    // Tambahkan array Hari dalam Bahasa Indonesia
-    const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    // ... di dalam fungsi bersihkanDanUraiKresna ...
 
-    // Gunakan template string untuk menggabungkan Hari + Tanggal
-    const hariIni = hariList[now.getDay()];
+    const now = new Date();
+    const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const bulanList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    
+    // Mengambil hari, tanggal, bulan, tahun, jam, menit real-time
+    const hari = hariList[now.getDay()];
     const tgl = now.getDate();
-    const bln = bulanList[now.getMonth() + 1];
+    const bln = bulanList[now.getMonth()];
     const thn = now.getFullYear();
     const jam = String(now.getHours()).padStart(2, '0');
     const menit = String(now.getMinutes()).padStart(2, '0');
     
-    data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
+    // Format: Senin, 23 Juni 2026 Pukul 12.26 WIB
+    data['WAKTU'] = `${hari}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
+    
+    // ... lanjutkan ke data['TANGGAL_TTD'] dst ...
     
     
     data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;

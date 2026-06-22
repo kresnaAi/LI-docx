@@ -252,17 +252,15 @@ async function generateDocument() {
         const newDownloadBtn = downloadBtn.cloneNode(true);
         downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
         
-        // --- BAGIAN KODE YANG DITAMBAHKAN ---
         newDownloadBtn.addEventListener('click', function(e) {
             e.preventDefault();
             window.saveAs(out, "Laporan_Informasi_Kresna.docx");
             
-            // Jeda 1 detik lalu halaman akan otomatis refresh
+            // Jeda 1 detik lalu halaman akan otomatis refresh setelah DOWNLOAD DOCX di-klik
             setTimeout(function() {
                 location.reload();
             }, 1000);
         });
-        // ------------------------------------
         
     } catch (error) {
         alert("Terjadi Kesalahan: " + error.message);

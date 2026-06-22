@@ -9,7 +9,6 @@ from docx.shared import Pt
 app = Flask(__name__, template_folder='.')
 CORS(app) # <--- TAMBAHKAN INI (Mengizinkan akses dari GitHub Pages)
 
-app = Flask(__name__, template_folder='.')
 
 def bersihkan_dan_urai_kresna(text):
     """

@@ -15,12 +15,9 @@
             --neon-purple: #4facfe;
             --text-light: #e2e8f0;
         }
-        body { font-family: sans-serif; background: #0a0f1d; color: white; padding: 20px; text-align: center; }
-        textarea { width: 100%; max-width: 500px; height: 200px; }
-        button { padding: 15px 30px; margin-top: 20px; cursor: pointer; background: #00f2fe; border: none; font-weight: bold; }
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
@@ -28,6 +25,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            text-align: center;
         }
         .container {
             width: 95%;
@@ -156,23 +154,23 @@ function bersihkanDanUraiKresna(text) {
     textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};
     
-    // Konfigurasi Waktu Realtime
+    // Konfigurasi Pengambilan Waktu Real-Time Perangkat
     const now = new Date();
     const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const bulanList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     
     const hari = hariList[now.getDay()];
     const tgl = now.getDate();
-    const bln = bulanList[now.getMonth()]; // Index 0-11 sudah pas dengan array bulanList
+    const bln = bulanList[now.getMonth()]; // Tidak perlu +1 karena array dimulai dari 0
     const thn = now.getFullYear();
     const jam = String(now.getHours()).padStart(2, '0');
     const menit = String(now.getMinutes()).padStart(2, '0');
     
-    // WAKTU untuk I.D (Hari, Tanggal Bulan Tahun Pukul Jam.Menit WIB)
+    // Menyusun format Waktu Mendapatkan Informasi (D) -> Contoh: Senin, 22 Juni 2026 Pukul 14.30 WIB
     data['WAKTU'] = `${hari}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
     
-    // TANGGAL_TTD (untuk penutup: "Bandar Lampung, 23 Juni 2026")
-    data['TANGGAL_TTD'] = `Bandar Lampung, ${tgl} ${bln} ${thn}`;
+    // Menyusun format Tanggal Tanda Tangan -> Contoh: 22 Juni 2026
+    data['TANGGAL_TTD'] = `${tgl} ${bln} ${thn}`;
     
     function ambilPola(regex, src) {
         const m = src.match(regex);
@@ -186,7 +184,6 @@ function bersihkanDanUraiKresna(text) {
     data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
     data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
     
-    // ... (sisa logika FAKTA dan PENDAPAT tetap sama)
     const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
     if (faktaBlock) {
         data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
@@ -206,7 +203,8 @@ function bersihkanDanUraiKresna(text) {
             data[`PENDAPAT_${char}`] = ambilPola(reg, pendapatBlock);
         }
     } else {
-        for (let char of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']) { data[`PENDAPAT_${char}`] = ""; }
+        const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
     }
     return data;
 }

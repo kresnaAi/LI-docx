@@ -97,11 +97,14 @@ def suntik_dokumen_docx(p, data_komponen):
         run.bold = is_bold
         run.font.size = Pt(11)
 
+    pass
+
 # ================= ROUTE API =================
 
 @app.route('/')
 def index():
-    return render_template('https://kresnaai.github.io/LI-docx/dashboard.html')
+    # 2. Pastikan file 'dashboard.html' ada di folder yang sama dengan app.py
+    return render_template('index.html')
 
 @app.route('/generate', methods=['POST'])
 @app.route('/api/generate', methods=['POST'])
@@ -153,6 +156,7 @@ def generate_doc():
         
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    pass
 
 @app.route('/download/docx')
 def download_docx():

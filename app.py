@@ -162,4 +162,4 @@ def download_docx():
     return send_file("output_LI.docx", as_attachment=True, download_name="Laporan_Informasi_Kresna.docx")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5030)

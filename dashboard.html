@@ -196,38 +196,44 @@
     }
 
     async function generateDocument() {
-        const text = document.getElementById('narasiInput').value;
-        if(!text) return alert("Harap masukkan narasi terlebih dahulu.");
+    const text = document.getElementById('narasiInput').value;
+    if(!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
-        // Membaca path penyimpanan dari localStorage untuk dikirim ke API
-        const savedPath = localStorage.getItem("customStoragePath") || "";
+    const savedPath = localStorage.getItem("customStoragePath") || "";
 
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('resultBox').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultBox').style.display = 'none';
 
-        try {
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                // UPGRADE: Menyertakan parameter storage_path ke server Flask
-                body: JSON.stringify({
-                    text: text,
-                    storage_path: savedPath
-                })
-            });
-            const data = await response.json();
+    // ⚠️ GANTI URL DI BAWAH INI DENGAN URL DARI NGROK ANDA NANTINYA
+    const NGROK_URL = "https://jalur-aman-anda.ngrok-free.app"; 
+
+    try {
+        // Mengarahkan fetch langsung ke server tunnel Ngrok Anda
+        const response = await fetch(`${NGROK_URL}/api/generate`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                text: text,
+                storage_path: savedPath
+            })
+        });
+        const data = await response.json();
+        
+        document.getElementById('loading').style.display = 'none';
+        if(data.status === 'success') {
+            document.getElementById('resultBox').style.display = 'block';
             
-            document.getElementById('loading').style.display = 'none';
-            if(data.status === 'success') {
-                document.getElementById('resultBox').style.display = 'block';
-            } else {
-                alert("Error: " + data.message);
-            }
-        } catch (error) {
-            alert("Koneksi ke server gagal!");
-            document.getElementById('loading').style.display = 'none';
+            // Perbarui link download agar mengarah ke Ngrok juga
+            document.querySelector("a[href='/download/docx']").href = `${NGROK_URL}/download/docx`;
+            document.querySelector("a[href='/download/pdf']").href = `${NGROK_URL}/download/pdf`;
+        } else {
+            alert("Error: " + data.message);
         }
+    } catch (error) {
+        alert("Koneksi ke server lokal via Ngrok gagal!");
+        document.getElementById('loading').style.display = 'none';
     }
+}
 </script>
 </body>
 </html>

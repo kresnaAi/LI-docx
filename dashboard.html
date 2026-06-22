@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin</title>
+    <title>Dashboard Admin - Intelkam LI Generator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -155,19 +156,10 @@ function bersihkanDanUraiKresna(text) {
     const data = {};
     
     const now = new Date();
-    // Tambahkan array Hari dalam Bahasa Indonesia
     const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    // Gunakan template string untuk menggabungkan Hari + Tanggal
-    const hariIni = hariList[now.getDay()];
-    const tgl = now.getDate();
-    const bln = bulanList[now.getMonth() + 1];
-    const thn = now.getFullYear();
-    const jam = String(now.getHours()).padStart(2, '0');
-    const menit = String(now.getMinutes()).padStart(2, '0');
     
-    // HASIL: Senin, 22 Juni 2026 Pukul 23.32 WIB
-    data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
+    data['WAKTU'] = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()} Pukul ${String(now.getHours()).padStart(2, '0')}.${String(now.getMinutes()).padStart(2, '0')} WIB`;
     data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
     
     function ambilPola(regex, src) {
@@ -207,24 +199,52 @@ function bersihkanDanUraiKresna(text) {
     return data;
 }
 
-<h2>GENERATOR LAPORAN</h2>
-    <textarea id="narasiInput" placeholder="Tempel narasi di sini..."></textarea>
-    <button onclick="generateDocument()">GENERATE LAPORAN</button>
-
-    <script>
-        async function generateDocument() {
-            const text = document.getElementById('narasiInput').value;
-            const response = await fetch('./format_original.docx');
-            const arrayBuffer = await response.arrayBuffer();
-            const zip = new PizZip(arrayBuffer);
-            const doc = new window.docxtemplater(zip, {delimiters: {start: '{{', end: '}}'}});
-            
-            // Logika penyuntikan teks...
-            doc.render();
-            const out = doc.getZip().generate({type: "blob"});
-            window.saveAs(out, "Laporan_Informasi.docx");
-        }
-    </script>
+async function generateDocument() {
+    const text = document.getElementById('narasiInput').value;
+    if(!text) return alert("Harap masukkan narasi terlebih dahulu.");
+    
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('resultBox').style.display = 'none';
+    
+    try {
+        const response = await fetch('./format_original.docx');
+        if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
+        const arrayBuffer = await response.arrayBuffer();
+        
+        const dataKomponen = bersihkanDanUraiKresna(text);
+        const zip = new PizZip(arrayBuffer);
+        const doc = new window.docxtemplater(zip, {
+            delimiters: { start: "{{", end: "}}" },
+            paragraphLoop: true,
+            linebreaks: true
+        });
+        
+        doc.setData(dataKomponen);
+        doc.render();
+        
+        const out = doc.getZip().generate({
+            type: "blob",
+            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        });
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('resultBox').style.display = 'block';
+        
+        const downloadBtn = document.getElementById('linkDownloadDocx');
+        const newDownloadBtn = downloadBtn.cloneNode(true);
+        downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+        
+        newDownloadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.saveAs(out, "Laporan_Informasi_Kresna.docx");
+        });
+        
+    } catch (error) {
+        alert("Terjadi Kesalahan: " + error.message);
+        document.getElementById('loading').style.display = 'none';
+    }
+}
+</script>
 
 </body>
 </html>

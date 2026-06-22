@@ -2,8 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin</title>
+    <title>Generator LI Kresna</title>
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -16,6 +15,9 @@
             --neon-purple: #4facfe;
             --text-light: #e2e8f0;
         }
+        body { font-family: sans-serif; background: #0a0f1d; color: white; padding: 20px; text-align: center; }
+        textarea { width: 100%; max-width: 500px; height: 200px; }
+        button { padding: 15px 30px; margin-top: 20px; cursor: pointer; background: #00f2fe; border: none; font-weight: bold; }
         body {
             margin: 0;
             padding: 0;
@@ -119,7 +121,7 @@
 <body>
 
 <div class="container">
-    <h2><i class="fas fa-terminal"></i> IMPORT FORMAT AI</h2>
+    <h2><i class="fas fa-terminal"></i> MASUKAN HASIL LI DARI KRESNA AI</h2>
     <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Versi Cloud Website - Tanpa Server & Ngrok</p>
     
     <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Tempel hasil analisis dari KRESNA AI di bawah ini:</p>
@@ -166,6 +168,7 @@ function bersihkanDanUraiKresna(text) {
     const thn = now.getFullYear();
     const jam = String(now.getHours()).padStart(2, '0');
     const menit = String(now.getMinutes()).padStart(2, '0');
+    
     data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
     
     

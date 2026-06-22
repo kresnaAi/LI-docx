@@ -183,11 +183,6 @@ function bersihkanDanUraiKresna(text) {
     data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
     
     
-        // Logika Pintar: Hanya ambil jika ada isinya
-    function ambilPola(regex, src) {
-        const m = src.match(regex);
-        return m && m[1].trim() !== "" ? m[1].trim() : null; // Return null jika kosong
-    }
     
 
     
@@ -220,13 +215,6 @@ function bersihkanDanUraiKresna(text) {
     } else {
         const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
         for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
-    }// Contoh pengambilan FAKTA
-    const faktaA = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
-    data['FAKTA_A'] = faktaA || "";
-
-    // Untuk angka urutan, gunakan regex yang lebih spesifik
-    // Jika tidak ada angka 1, 2, 3 setelah huruf, maka biarkan kosong
-    data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock) || "";
 
     return data;
 }

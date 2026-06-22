@@ -198,52 +198,24 @@ function bersihkanDanUraiKresna(text) {
     return data;
 }
 
-async function generateDocument() {
-    const text = document.getElementById('narasiInput').value;
-    if(!text) return alert("Harap masukkan narasi terlebih dahulu.");
-    
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('resultBox').style.display = 'none';
-    
-    try {
-        const response = await fetch('./format_original.docx');
-        if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
-        const arrayBuffer = await response.arrayBuffer();
-        
-        const dataKomponen = bersihkanDanUraiKresna(text);
-        const zip = new PizZip(arrayBuffer);
-        const doc = new window.docxtemplater(zip, {
-            delimiters: { start: "{{", end: "}}" },
-            paragraphLoop: true,
-            linebreaks: true
-        });
-        
-        doc.setData(dataKomponen);
-        doc.render();
-        
-        const out = doc.getZip().generate({
-            type: "blob",
-            mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        });
-        
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('resultBox').style.display = 'block';
-        
-        const downloadBtn = document.getElementById('linkDownloadDocx');
-        const newDownloadBtn = downloadBtn.cloneNode(true);
-        downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
-        
-        newDownloadBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            window.saveAs(out, "Laporan_Informasi_Kresna.docx");
-        });
-        
-    } catch (error) {
-        alert("Terjadi Kesalahan: " + error.message);
-        document.getElementById('loading').style.display = 'none';
-    }
-}
-</script>
+<h2>GENERATOR LAPORAN</h2>
+    <textarea id="narasiInput" placeholder="Tempel narasi di sini..."></textarea>
+    <button onclick="generateDocument()">GENERATE LAPORAN</button>
+
+    <script>
+        async function generateDocument() {
+            const text = document.getElementById('narasiInput').value;
+            const response = await fetch('./format_original.docx');
+            const arrayBuffer = await response.arrayBuffer();
+            const zip = new PizZip(arrayBuffer);
+            const doc = new window.docxtemplater(zip, {delimiters: {start: '{{', end: '}}'}});
+            
+            // Logika penyuntikan teks...
+            doc.render();
+            const out = doc.getZip().generate({type: "blob"});
+            window.saveAs(out, "Laporan_Informasi.docx");
+        }
+    </script>
 
 </body>
 </html>

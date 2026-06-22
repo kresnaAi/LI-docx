@@ -121,10 +121,10 @@
 <body>
 
 <div class="container">
-    <h2><i class="fas fa-terminal"></i> Generator LI </h2>
-    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Dragon FLy | AIPDA | 86020832</p>
+    <h2><i class="fas fa-terminal"></i> MASUKAN HASIL LI DARI KRESNA AI</h2>
+    <p style="text-align: center; color: #718096; margin-top:-5px; font-size:12px; margin-bottom: 25px;">Versi Cloud Website - Tanpa Server & Ngrok</p>
     
-    <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Khusus Tempel hasil Buat LI dari KRESNA AI di bawah ini:</p>
+    <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Tempel hasil analisis dari KRESNA AI di bawah ini:</p>
     <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
     
     <button class="btn-neon" onclick="generateDocument()">
@@ -156,30 +156,30 @@ function bersihkanDanUraiKresna(text) {
     textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};
     
-    // Inisialisasi Waktu Realtime Perangkat User
     const now = new Date();
+    // Tambahkan array Hari dalam Bahasa Indonesia
     const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    const bulanList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-    
-    const hari = hariList[now.getDay()];
+    const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // Gunakan template string untuk menggabungkan Hari + Tanggal
+    const hariIni = hariList[now.getDay()];
     const tgl = now.getDate();
-    const bln = bulanList[now.getMonth()]; // Perbaikan: Langsung gunakan index asli (0-11)
+    const bln = bulanList[now.getMonth() + 1];
     const thn = now.getFullYear();
     const jam = String(now.getHours()).padStart(2, '0');
     const menit = String(now.getMinutes()).padStart(2, '0');
     
-    // 1. Mengisi Waktu Mendapatkan Informasi secara Realtime
-    // Contoh Hasil: Senin, 22 Juni 2026 Pukul 14.30 WIB
-    data['WAKTU'] = `${hari}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
+    data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
     
-    // 2. Mengisi Tanggal Tanda Tangan secara Realtime
-    // Contoh Hasil: 22 Juni 2026
-    data['TANGGAL_TTD'] = `${tgl} ${bln} ${thn}`;
+    
+    data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
     
     function ambilPola(regex, src) {
         const m = src.match(regex);
         return m ? m[1].trim() : "";
     }
+
+    
     
     data['BIDANG'] = ambilPola(/Bidang\s*:\s*(.*)/, textClean);
     data['PERIHAL'] = ambilPola(/Perihal\s*:\s*(.*)/, textClean);
@@ -188,17 +188,13 @@ function bersihkanDanUraiKresna(text) {
     data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
     data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
     
-    // Catatan: Pola "D. Waktu mendapatkan Informasi" sengaja tidak diekstrak dari teks Kresna AI 
-    // agar nilainya murni menggunakan variable data['WAKTU'] realtime yang dibuat di atas.
-    
     const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
     if (faktaBlock) {
         data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
-        data['FAKFA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock); // Menyesuaikan typo FAKFA_B jika template Anda menggunakannya
-        data['FAKTA_B'] = data['FAKFA_B']; // Duplikasi aman agar terpanggil baik FAKTA_B atau FAKFA_B
+        data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
         data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
     } else {
-        data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
+        data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
     }
     
     const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);

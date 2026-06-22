@@ -163,11 +163,7 @@ function bersihkanDanUraiKresna(text) {
     while ((match = bidangRegex.exec(text)) !== null) { lastIdx = match.index; }
     if (lastIdx !== -1) { textClean = text.substring(lastIdx); }
 
-    // Logika Pintar: Hanya ambil jika ada isinya
-    function ambilPola(regex, src) {
-        const m = src.match(regex);
-        return m && m[1].trim() !== "" ? m[1].trim() : null; // Return null jika kosong
-    }
+    
 
     // Contoh pengambilan FAKTA
     const faktaA = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
@@ -178,6 +174,12 @@ function bersihkanDanUraiKresna(text) {
     data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock) || "";
 
     return data;
+
+    // Logika Pintar: Hanya ambil jika ada isinya
+    function ambilPola(regex, src) {
+        const m = src.match(regex);
+        return m && m[1].trim() !== "" ? m[1].trim() : null; // Return null jika kosong
+    }
     
     textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};

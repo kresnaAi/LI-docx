@@ -156,34 +156,28 @@ function bersihkanDanUraiKresna(text) {
     textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
     const data = {};
     
-    // ... di dalam fungsi bersihkanDanUraiKresna ...
-
+    // Konfigurasi Waktu Realtime
     const now = new Date();
     const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const bulanList = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
     
-    // Mengambil hari, tanggal, bulan, tahun, jam, menit real-time
     const hari = hariList[now.getDay()];
     const tgl = now.getDate();
-    const bln = bulanList[now.getMonth()];
+    const bln = bulanList[now.getMonth()]; // Index 0-11 sudah pas dengan array bulanList
     const thn = now.getFullYear();
     const jam = String(now.getHours()).padStart(2, '0');
     const menit = String(now.getMinutes()).padStart(2, '0');
     
-    // Format: Senin, 23 Juni 2026 Pukul 12.26 WIB
+    // WAKTU untuk I.D (Hari, Tanggal Bulan Tahun Pukul Jam.Menit WIB)
     data['WAKTU'] = `${hari}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
     
-    // ... lanjutkan ke data['TANGGAL_TTD'] dst ...
-    
-    
-    data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
+    // TANGGAL_TTD (untuk penutup: "Bandar Lampung, 23 Juni 2026")
+    data['TANGGAL_TTD'] = `Bandar Lampung, ${tgl} ${bln} ${thn}`;
     
     function ambilPola(regex, src) {
         const m = src.match(regex);
         return m ? m[1].trim() : "";
     }
-
-    
     
     data['BIDANG'] = ambilPola(/Bidang\s*:\s*(.*)/, textClean);
     data['PERIHAL'] = ambilPola(/Perihal\s*:\s*(.*)/, textClean);
@@ -192,13 +186,14 @@ function bersihkanDanUraiKresna(text) {
     data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
     data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
     
+    // ... (sisa logika FAKTA dan PENDAPAT tetap sama)
     const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
     if (faktaBlock) {
         data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
         data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
         data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
     } else {
-        data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
+        data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
     }
     
     const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
@@ -211,8 +206,7 @@ function bersihkanDanUraiKresna(text) {
             data[`PENDAPAT_${char}`] = ambilPola(reg, pendapatBlock);
         }
     } else {
-        const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
+        for (let char of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']) { data[`PENDAPAT_${char}`] = ""; }
     }
     return data;
 }

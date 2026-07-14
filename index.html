@@ -99,16 +99,5 @@
             }
         }
     </script>
-
-    <!-- CATATAN: Ganti placeholder "PASTE_ENCRYPTED_STRING_HERE" dengan hasil enkripsi XOR+Base64 dari kode utama menggunakan kunci "cendana2".
-         Untuk mendapatkan string tersebut, gunakan skrip enkripsi di bawah (jalankan di console browser, lalu salin outputnya):
-         
-         const key = 'cendana2';
-         const code = `...kode utama yang akan dienkripsi...`;
-         let xored = '';
-         for(let i=0;i<code.length;i++){ xored += String.fromCharCode(code.charCodeAt(i) ^ key.charCodeAt(i % key.length)); }
-         const encrypted = btoa(xored);
-         console.log(encrypted);
-    -->
 </body>
 </html>

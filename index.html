@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Generator LI Kresna</title>
+    <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0a0f1d;
+            --panel-dark: #131a30;
+            --neon-blue: #00f2fe;
+            --neon-purple: #4facfe;
+            --text-light: #e2e8f0;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: #0a0f1d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            max-width: 500px;
+            height: 200px;
+        }
+
+        button {
+            padding: 15px 30px;
+            margin-top: 20px;
+            cursor: pointer;
+            background: #00f2fe;
+            border: none;
+            font-weight: bold;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 500px;
+            background: var(--panel-dark);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 24px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            background: #070b14;
+            border: 1px solid #222f54;
+            border-radius: 8px;
+            color: #fff;
+            padding: 15px;
+            box-sizing: border-box;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+        }
+
+        .btn-neon {
+            display: block;
+            width: 100%;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            color: #000;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .btn-neon:hover {
+            box-shadow: 0 0 20px var(--neon-blue);
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+            color: var(--neon-blue);
+        }
+
+        .result-box {
+            display: none;
+            text-align: center;
+            background: #0d1527;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px dashed var(--neon-blue);
+            margin-top: 20px;
+        }
+
+        .btn-download {
+            display: inline-block;
+            background: #00e676;
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: 0.2s;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .btn-download:hover {
+            box-shadow: 0 0 15px #00e676;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2><i class="fas fa-terminal"></i> LI Generator</h2>
+        <div style="text-align: center; margin-top: -5px; margin-bottom: 25px;">
+            <div
+                style="display: inline-block; width: 30px; height: 20px; border: 1px solid #cbd5e1; box-sizing: border-box; vertical-align: middle;">
+                <div style="background-color: #ff0000; height: 50%;"></div>
+                <div style="background-color: #ffffff; height: 50%;"></div>
+            </div>
+            <p style="color: #a0aec0; font-size: 12px; font-weight: bold; margin: 0 0 8px 0;">
+                Dragon Fly | AIPDA | 86020832
+            </p>
+        </div>
+
+        <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Khusus Tempel hasil Buat LI dari KRESNA AI di
+            bawah ini:</p>
+        <p style="color: #ff0000; font-size: 10px; margin-bottom: 8px; font-weight: bold;">[Hapus dulu tanda seperti ini
+            = [6/23/2026 1:34 AM] KRESNA AI]</p>
+        <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
+
+        <button class="btn-neon" onclick="generateDocument()">
+            <i class="fas fa-file-invoice"></i> GENERATE
+        </button>
+
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word di Browser...
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <i class="fas fa-check-circle fa-3x" style="color: #00e676; margin-bottom:10px;"></i>
+            <h3>GENERATE BERHASIL!</h3>
+            <p style="color: #a0aec0; font-size: 13px; margin-top:-10px; margin-bottom: 20px;">Dokumen Laporan Informasi
+                siap diunduh.</p>
+            <a id="linkDownloadDocx" href="#" class="btn-download">
+                <i class="fas fa-file-word"></i> DOWNLOAD DOCX
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function bersihkanDanUraiKresna(text) {
+            let textClean = text;
+            const bidangRegex = /\bBidang\s*:/g;
+            let match, lastIdx = -1;
+            while ((match = bidangRegex.exec(text)) !== null) { lastIdx = match.index; }
+            if (lastIdx !== -1) { textClean = text.substring(lastIdx); }
+
+            textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
+            const data = {};
+
+            const now = new Date();
+            const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+            const hariIni = hariList[now.getDay()];
+            const tgl = now.getDate();
+            const bln = bulanList[now.getMonth() + 1];
+            const thn = now.getFullYear();
+            const jam = String(now.getHours()).padStart(2, '0');
+            const menit = String(now.getMinutes()).padStart(2, '0');
+
+            data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
+
+            data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
+
+            const romawiBulanList = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+            data['BULAN_ROMAWI'] = romawiBulanList[now.getMonth() + 1];
+            data['TAHUN'] = thn;
+
+            function ambilPola(regex, src) {
+                const m = src.match(regex);
+                return m ? m[1].trim() : "";
+            }
+
+            data['BIDANG'] = ambilPola(/Bidang\s*:\s*(.*)/, textClean);
+            data['PERIHAL'] = ambilPola(/Perihal\s*:\s*(.*)/, textClean);
+            data['SUMBER'] = ambilPola(/A\.\s*Sumber Informasi\s*:\s*(.*)/, textClean);
+            data['HUBUNGAN'] = ambilPola(/B\.\s*Hubungan dengan Sumber\s*:\s*(.*)/, textClean);
+            data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
+            data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
+
+            const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
+            if (faktaBlock) {
+                data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
+                data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
+                data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
+            } else {
+                data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
+            }
+
+            const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
+
+            const abjadFull = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            for (let char of abjadFull) {
+                data[`PENDAPAT_${char}`] = "";
+                data[`has_PENDAPAT_${char}`] = false;
+            }
+            data['PENDAPAT_ALL'] = "";
+
+            if (pendapatBlock) {
+                let pendapatList = [];
+                for (let i = 0; i < abjadFull.length; i++) {
+                    const char = abjadFull[i];
+                    const nextChar = abjadFull[i + 1];
+
+                    let reg;
+                    if (nextChar && pendapatBlock.match(new RegExp(`(?:^|\\s)${nextChar}\\.\\s+`))) {
+                        reg = new RegExp(`(?:^|\\s)${char}\\.\\s+([\\s\\S]*?)(?=(?:^|\\s)${nextChar}\\.\\s+)`);
+                    } else {
+                        reg = new RegExp(`(?:^|\\s)${char}\\.\\s+([\\s\\S]*)`);
+                    }
+
+                    const hasil = ambilPola(reg, pendapatBlock);
+                    if (hasil) {
+                        data[`PENDAPAT_${char}`] = hasil;
+                        data[`has_PENDAPAT_${char}`] = true;
+                        pendapatList.push(`${char}.\t${hasil}`);
+                    } else {
+                        break;
+                    }
+                }
+                data['PENDAPAT_ALL'] = pendapatList.join("\n\n");
+            }
+            return data;
+        }
+
+        function dapatkanLokasi() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve("Bandar Lampung");
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    try {
+                        const { latitude, longitude } = position.coords;
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                        const data = await res.json();
+                        let kota = data.address.city || data.address.town || data.address.regency || data.address.county || data.address.state || "Bandar Lampung";
+                        kota = kota.replace(/^(Kota|Kabupaten)\s+/i, "");
+                        resolve(kota);
+                    } catch (e) {
+                        resolve("Bandar Lampung");
+                    }
+                }, (error) => {
+                    resolve("Bandar Lampung");
+                }, { timeout: 10000 });
+            });
+        }
+
+        async function generateDocument() {
+            const text = document.getElementById('narasiInput').value;
+            if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
+
+            document.getElementById('loading').innerHTML = '<i class="fas fa-map-marker-alt"></i> Menyesuaikan Lokasi...';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+
+            try {
+                const lokasiReal = await dapatkanLokasi();
+                document.getElementById('loading').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word di Browser...';
+
+                const response = await fetch('./format_original.docx');
+                if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
+                const arrayBuffer = await response.arrayBuffer();
+
+                const dataKomponen = bersihkanDanUraiKresna(text);
+                dataKomponen['LOKASI'] = lokasiReal;
+                const zip = new PizZip(arrayBuffer);
+                const doc = new window.docxtemplater(zip, {
+                    delimiters: { start: "{{", end: "}}" },
+                    paragraphLoop: true,
+                    linebreaks: true
+                });
+
+                doc.setData(dataKomponen);
+                doc.render();
+
+                const out = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                });
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('resultBox').style.display = 'block';
+
+                const downloadBtn = document.getElementById('linkDownloadDocx');
+                const newDownloadBtn = downloadBtn.cloneNode(true);
+                downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
+
+                newDownloadBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    window.saveAs(out, "Laporan_Informasi_Kresna.docx");
+
+                    // Jeda 1 detik lalu halaman akan otomatis refresh setelah DOWNLOAD DOCX di-klik
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
+                });
+
+            } catch (error) {
+                alert("Terjadi Kesalahan: " + error.message);
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+    </script>
+
+    <!-- ini itu saja ] -->
+</body>
+
+</html>

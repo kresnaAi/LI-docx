@@ -263,7 +263,7 @@
                 let cleanPendapatBlock = pendapatBlock;
                 const cutOffPatterns = [
                     /\n\s*(?:Demikian|Dibuat|Dikeluarkan|Mengetahui|An\.|a\.n\.|TTD|Tembusan)[\s\S]*$/i,
-                    /\n\s*[A-Z][a-z]+,\s*\d+\s*[A-Z][a-z]+\s*\d+[\s\S]*$/  // pola tanggal di akhir
+                    /\n\s*[A-H][a-z]+,\s*\d+\s*[A-H][a-z]+\s*\d+[\s\S]*$/  // pola tanggal di akhir
                 ];
                 
                 for (const pattern of cutOffPatterns) {
@@ -273,7 +273,7 @@
                     }
                 }
                 
-                const abjadList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                const abjadList = "ABCDEFGH";
                 let i = 0;
                 
                 while (i < abjadList.length) {
@@ -402,7 +402,7 @@
                     let templatePXml = "";
 
                     for (let i = 0; i < paragraphs.length; i++) {
-                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
+                        if (paragraphs[i].xml.match(/PENDAPAT_[A-H]/)) {
                             if (firstIndex === -1) {
                                 firstIndex = i;
                                 templatePXml = paragraphs[i].xml;
@@ -417,7 +417,7 @@
                         
                         for (let k = lastIndex + 1; k < paragraphs.length; k++) {
                             let pXml = paragraphs[k].xml;
-                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
+                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-H]/g, '').trim();
                             if (textContent.length === 0) {
                                 endBoundary = paragraphs[k].end;
                             } else {
@@ -433,10 +433,10 @@
                             const item = dataKomponen.pendapatList[j];
                             
                             // Clone template dan ganti placeholder
-                            let newPXml = templatePXml.replace(/PENDAPAT_[A-Z]/g, `PENDAPAT_${item.char}`);
+                            let newPXml = templatePXml.replace(/PENDAPAT_[A-H]/g, `PENDAPAT_${item.char}`);
                             
                             // Ganti juga karakter hardcoded di template
-                            const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
+                            const templateCharMatch = templatePXml.match(/PENDAPAT_([A-H])/);
                             if (templateCharMatch) {
                                 const templateChar = templateCharMatch[1];
                                 // Ganti karakter di teks (misalnya "A." menjadi "B.", dll)

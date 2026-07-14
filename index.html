@@ -257,7 +257,13 @@
 
                     const val = ambilPola(reg, pendapatBlock);
                     if (val && val.trim()) {
-                        pendapatList.push({ char: char, isi: val.trim() });
+                        const trimmedVal = val.trim();
+                        // Cegah halusinasi AI: jika poin ini persis sama dengan poin yang sudah ada, hentikan parsing
+                        const isDuplicate = pendapatList.some(p => p.isi === trimmedVal);
+                        if (isDuplicate) {
+                            break;
+                        }
+                        pendapatList.push({ char: char, isi: trimmedVal });
                         i++;
                     } else {
                         break;

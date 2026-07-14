@@ -259,23 +259,22 @@
             return data;
         }
 
-        async function executeLocationRequest(silent = false) {
-            let modalBtn = null;
-            let originalText = "";
+        async function generateDocument() {
+            const text = document.getElementById('narasiInput').value;
+            if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
-            if (!silent) {
-                modalBtn = document.querySelector("#locationModal button[onclick*='executeLocationRequest']");
-                if (modalBtn) {
-                    originalText = modalBtn.innerHTML;
-                    modalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Meminta Izin...';
-                    modalBtn.disabled = true;
-                }
-            }
+            const generateBtn = document.querySelector('.btn-neon');
+            const originalBtnHtml = generateBtn.innerHTML;
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa Izin Lokasi...';
+
+            let lokasiName = "Lokasi Tidak Diketahui";
 
             try {
+                // Meminta izin lokasi secara paksa / membaca lokasi jika sudah ada izin
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) {
-                        reject(new Error("Geolokasi tidak didukung."));
+                        reject(new Error("Geolokasi tidak didukung oleh browser Anda."));
                     } else {
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
                             enableHighAccuracy: true,
@@ -285,61 +284,29 @@
                     }
                 });
 
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('resultBox').style.display = 'none';
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sedang Memproses...';
+
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-
                 try {
                     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
                     const geoData = await geoRes.json();
                     if (geoData && geoData.address) {
-                        globalLokasiName = geoData.address.city || geoData.address.regency || geoData.address.county || geoData.address.town || geoData.address.state_district || "Lokasi Tidak Diketahui";
-                        globalLokasiName = globalLokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
+                        lokasiName = geoData.address.city || geoData.address.regency || geoData.address.county || geoData.address.town || geoData.address.state_district || "Lokasi Tidak Diketahui";
+                        lokasiName = lokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
                     }
                 } catch (e) {
                     console.error("Gagal mendapatkan nama lokasi:", e);
                 }
 
-                isLocationGranted = true;
-
-                if (!silent) {
-                    closeLocationModal();
-                    generateDocumentBase();
-                }
             } catch (err) {
-                if (!silent) {
-                    alert("Akses lokasi ditolak atau bermasalah. Pastikan GPS aktif dan setujui izin pada browser/sistem.");
-                    closeLocationModal();
-                } else {
-                    console.warn("Akses lokasi ditolak pada auto-check.");
-                }
-            } finally {
-                if (!silent && modalBtn) {
-                    modalBtn.innerHTML = originalText;
-                    modalBtn.disabled = false;
-                }
-            }
-        }
-
-        async function generateDocument() {
-            const text = document.getElementById('narasiInput').value;
-            if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
-
-            if (!isLocationGranted) {
-                document.getElementById('locationModal').style.display = 'flex';
+                alert("Izin lokasi wajib diberikan untuk melakukan generate dokumen.");
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalBtnHtml;
                 return;
             }
-            generateDocumentBase();
-        }
-
-        async function generateDocumentBase() {
-            const text = document.getElementById('narasiInput').value;
-            if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
-
-            const generateBtn = document.querySelector('.btn-neon');
-            const originalBtnHtml = generateBtn.innerHTML;
-            generateBtn.disabled = true;
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('resultBox').style.display = 'none';
 
             try {
                 const response = await fetch('./format_original.docx');
@@ -347,22 +314,9 @@
                 const arrayBuffer = await response.arrayBuffer();
 
                 const dataKomponen = bersihkanDanUraiKresna(text);
-                dataKomponen['LOKASI'] = globalLokasiName;
+                dataKomponen['LOKASI'] = lokasiName;
 
                 const zip = new PizZip(arrayBuffer);
-
-                // Hapus paragraf PENDAPAT pelapor yang tidak digunakan langsung dari XML
-                let xmlContent = zip.file("word/document.xml").asText();
-                const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-                for (let char of abjad) {
-                    const key = `PENDAPAT_${char}`;
-                    if (!dataKomponen[key] || dataKomponen[key].trim() === "") {
-                        const pattern = new RegExp("<w:p\\b[^>]*>(?:(?!</w:p>)[\\s\\S])*PENDAPAT_(?:(?!</w:p>)[\\s\\S])*" + char + "(?:(?!</w:p>)[\\s\\S])*</w:p>(?:\\s*<w:p\\b[^>]*><w:pPr>(?:(?!<w:r>)(?!</w:p>)[\\s\\S])*</w:p>)?", "g");
-                        xmlContent = xmlContent.replace(pattern, "");
-                    }
-                }
-                zip.file("word/document.xml", xmlContent);
-
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
                     paragraphLoop: true,
@@ -379,8 +333,6 @@
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('resultBox').style.display = 'block';
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnHtml;
 
                 const downloadBtn = document.getElementById('linkDownloadDocx');
                 const newDownloadBtn = downloadBtn.cloneNode(true);
@@ -390,6 +342,7 @@
                     e.preventDefault();
                     window.saveAs(out, "Laporan_Informasi_Kresna.docx");
 
+                    // Jeda 1 detik lalu halaman akan otomatis refresh setelah DOWNLOAD DOCX di-klik
                     setTimeout(function () {
                         location.reload();
                     }, 1000);
@@ -398,8 +351,6 @@
             } catch (error) {
                 alert("Terjadi Kesalahan: " + error.message);
                 document.getElementById('loading').style.display = 'none';
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnHtml;
             }
         }
     </script>

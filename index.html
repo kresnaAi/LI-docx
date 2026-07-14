@@ -349,12 +349,18 @@
                     let firstIndex = -1;
                     let lastIndex = -1;
                     let templatePXml = "";
+                    let templateChar = 'A';
 
                     for (let i = 0; i < paragraphs.length; i++) {
-                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
+                        let cleanText = paragraphs[i].xml.replace(/<[^>]+>/g, '');
+                        if (cleanText.match(/PENDAPAT_[A-Z]/)) {
                             if (firstIndex === -1) {
                                 firstIndex = i;
                                 templatePXml = paragraphs[i].xml;
+                                const matchChar = cleanText.match(/PENDAPAT_([A-Z])/);
+                                if (matchChar) {
+                                    templateChar = matchChar[1];
+                                }
                             }
                             lastIndex = i;
                         }
@@ -373,9 +379,6 @@
                             }
                         }
 
-                        const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
-                        const templateChar = templateCharMatch ? templateCharMatch[1] : 'A';
-
                         let generatedXml = "";
                         const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
 
@@ -384,8 +387,17 @@
 
                             let newPXml = templatePXml.replace(new RegExp(`PENDAPAT_${templateChar}`, 'g'), `PENDAPAT_${char}`);
 
-                            const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}(\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
-                            newPXml = newPXml.replace(hardcodedRegex, `$1${char}$2`);
+                            let replacedLetter = false;
+                            const charRegex1 = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}([\\\\s\\\\u00A0]*\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
+                            newPXml = newPXml.replace(charRegex1, (match, p1, p2) => {
+                                replacedLetter = true;
+                                return p1 + char + p2;
+                            });
+
+                            if (!replacedLetter) {
+                                const charRegex2 = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}([\\\\s\\\\u00A0]*<\\\\/w:t>(?:<[^>]+>)*<w:t[^>]*>[\\\\s\\\\u00A0]*\\\\.)`);
+                                newPXml = newPXml.replace(charRegex2, `$1${char}$2`);
+                            }
 
                             generatedXml += newPXml;
 

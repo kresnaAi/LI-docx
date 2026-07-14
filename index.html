@@ -264,7 +264,7 @@
         async function executeLocationRequest(silent = false) {
             let modalBtn = null;
             let originalText = "";
-
+            
             if (!silent) {
                 modalBtn = document.querySelector("#locationModal button[onclick*='executeLocationRequest']");
                 if (modalBtn) {
@@ -289,7 +289,7 @@
 
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-
+                
                 try {
                     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
                     const geoData = await geoRes.json();
@@ -316,9 +316,9 @@
                         if (ipData && (ipData.city || ipData.region)) {
                             globalLokasiName = ipData.city || ipData.region || "Lokasi Tidak Diketahui";
                             globalLokasiName = globalLokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
-
+                            
                             isLocationGranted = true;
-
+                            
                             if (!silent) {
                                 closeLocationModal();
                                 generateDocumentBase();

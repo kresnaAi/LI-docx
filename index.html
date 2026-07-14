@@ -236,11 +236,11 @@
 
             const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
             if (faktaBlock) {
-                data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
-                data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
-                data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
+                data['FAKTA_A'] = ambilPola(/(?:^|[\n\r])\s*A\.\s*([\s\S]*?)(?=(?:[\n\r]\s*B\.\s*)|$)/, faktaBlock);
+                data['FAKTA_B'] = ambilPola(/(?:^|[\n\r])\s*B\.\s*([\s\S]*?)(?=(?:[\n\r]\s*C\.\s*)|$)/, faktaBlock);
+                data['FAKTA_C'] = ambilPola(/(?:^|[\n\r])\s*C\.\s*([\s\S]*)/, faktaBlock);
             } else {
-                data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
+                data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
             }
 
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
@@ -249,7 +249,7 @@
                 for (let i = 0; i < abjad.length; i++) {
                     const char = abjad[i];
                     const nextChar = abjad[i + 1];
-                    const reg = nextChar ? new RegExp(`${char}\\.\\s*([\\s\\S]*?)(?=${nextChar}\\.\\s*|$)`) : new RegExp(`${char}\\.\\s*([\\s\\S]*)`);
+                    const reg = nextChar ? new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`) : new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`);
                     data[`PENDAPAT_${char}`] = ambilPola(reg, pendapatBlock);
                 }
             } else {

@@ -253,6 +253,7 @@
                 if (data['FAKTA_C']) data['has_FAKTA_C'] = true;
             }
 
+            data['PENDAPAT_LOOP'] = [];
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             if (pendapatBlock) {
                 const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -265,6 +266,7 @@
                     if (hasil) {
                         data[`PENDAPAT_${char}`] = hasil;
                         data[`has_PENDAPAT_${char}`] = true;
+                        data['PENDAPAT_LOOP'].push({ HURUF: char, ISI: hasil });
                     }
                 }
             }

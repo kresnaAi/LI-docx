@@ -2,173 +2,314 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Generator LI Kresna</title>
+    <title>LI Generator • KRESNA Intelligence</title>
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-dark: #0a0f1d;
-            --panel-dark: #131a30;
-            --neon-blue: #00f2fe;
-            --neon-purple: #4facfe;
-            --text-light: #e2e8f0;
+            --bg-deep: #020617;
+            --panel-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(0, 242, 254, 0.25);
+            --neon-cyan: #00f2fe;
+            --neon-blue: #4facfe;
+            --accent-gold: #fbbf24;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
+            --shadow-glow: 0 0 30px rgba(0, 242, 254, 0.2);
         }
 
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
+            background: radial-gradient(ellipse at 30% 10%, #0f172a 0%, #020617 70%);
+            font-family: 'Exo 2', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: fixed;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            opacity: 0.15;
+            animation: floatParticle 8s infinite alternate ease-in-out;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .particle:nth-child(1) { width: 120px; height: 120px; top: 10%; left: 5%; filter: blur(20px); }
+        .particle:nth-child(2) { width: 80px; height: 80px; bottom: 15%; right: 8%; background: var(--neon-blue); filter: blur(25px); animation-duration: 11s; }
+        .particle:nth-child(3) { width: 60px; height: 60px; top: 60%; left: 70%; background: #4facfe; filter: blur(18px); animation-duration: 13s; }
+
+        @keyframes floatParticle {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.1; }
+            100% { transform: translate(30px, -40px) scale(1.3); opacity: 0.25; }
         }
 
         .container {
-            width: 95%;
-            max-width: 500px;
-            background: var(--panel-dark);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
-            border: 1px solid rgba(0, 242, 254, 0.2);
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 520px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 35px 30px;
+            box-shadow: var(--shadow-glow), inset 0 1px 0 rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
         }
 
         h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 2rem;
+            letter-spacing: 3px;
             text-align: center;
-            margin-top: 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 60%, #a78bfa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            font-size: 24px;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(0,242,254,0.4);
+        }
+
+        .badge-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0 25px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            padding: 12px 0;
+        }
+
+        .flag-mini {
+            width: 35px;
+            height: 24px;
+            border: 1px solid #cbd5e1;
+            background: linear-gradient(to bottom, #ff0000 50%, #ffffff 50%);
+            border-radius: 2px;
+        }
+
+        .badge-text {
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #cbd5e1;
+            background: rgba(0,242,254,0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
         }
 
         textarea {
             width: 100%;
-            height: 250px;
-            background: #070b14;
-            border: 1px solid #222f54;
-            border-radius: 8px;
-            color: #fff;
-            padding: 15px;
+            height: 260px;
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 16px;
+            color: #e2e8f0;
+            padding: 18px;
             font-size: 14px;
             resize: vertical;
+            outline: none;
+            transition: 0.25s;
+            font-family: 'Exo 2', monospace;
+            backdrop-filter: blur(10px);
         }
 
         textarea:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+            background: rgba(2, 6, 23, 0.95);
         }
 
         .btn-neon {
-            display: block;
             width: 100%;
-            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
-            color: #000;
-            font-weight: bold;
-            text-transform: uppercase;
-            padding: 14px;
+            background: linear-gradient(135deg, #00f2fe, #4facfe);
             border: none;
-            border-radius: 8px;
+            color: #020617;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 16px;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 15px;
+            margin-top: 20px;
             transition: all 0.3s ease;
-            margin-top: 15px;
+            font-family: 'Orbitron', sans-serif;
+            box-shadow: 0 8px 20px rgba(0,242,254,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .btn-neon:hover {
-            box-shadow: 0 0 20px var(--neon-blue);
-            transform: translateY(-2px);
+        .btn-neon:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,242,254,0.5);
         }
 
         .btn-neon:disabled {
-            opacity: 0.7;
+            opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
         }
 
         .loading {
             display: none;
+            margin: 25px 0 10px;
+            font-weight: 600;
+            color: var(--neon-cyan);
             text-align: center;
-            margin: 20px 0;
-            font-weight: bold;
-            color: var(--neon-blue);
+            animation: pulseText 1.5s infinite;
+        }
+
+        @keyframes pulseText {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
         }
 
         .result-box {
             display: none;
             text-align: center;
-            background: #0d1527;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px dashed var(--neon-blue);
-            margin-top: 20px;
+            background: rgba(0, 242, 254, 0.05);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0,242,254,0.4);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 25px;
+            animation: fadeSlide 0.4s ease;
+        }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-box i {
+            color: #10b981;
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .result-box h3 {
+            font-weight: 600;
+            color: #f1f5f9;
+            margin: 5px 0;
         }
 
         .btn-download {
-            display: inline-block;
-            background: #00e676;
-            color: #000;
-            padding: 12px 30px;
-            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #10b981;
+            color: #fff;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 30px;
             text-decoration: none;
-            font-weight: bold;
-            margin-top: 10px;
-            transition: 0.2s;
-            text-transform: uppercase;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
+            margin-top: 15px;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            box-shadow: 0 8px 18px rgba(16,185,129,0.3);
         }
 
         .btn-download:hover {
-            box-shadow: 0 0 15px #00e676;
+            background: #059669;
+            box-shadow: 0 12px 25px rgba(16,185,129,0.5);
+            transform: translateY(-2px);
+        }
+
+        .warning-text {
+            color: #f87171;
+            font-size: 0.75rem;
+            margin-bottom: 12px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Tambahan untuk instruksi center */
+        .instruction-center {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 5px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
+
+    <!-- Partikel latar -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
     <div class="container">
-        <h2><i class="fas fa-terminal"></i> LI Generator</h2>
-        <div style="text-align: center; margin-top: -5px; margin-bottom: 25px;">
-            <div style="display: inline-block; width: 30px; height: 20px; border: 1px solid #cbd5e1; box-sizing: border-box; vertical-align: middle;">
-                <div style="background-color: #ff0000; height: 50%;"></div>
-                <div style="background-color: #ffffff; height: 50%;"></div>
-            </div>
-            <p style="color: #a0aec0; font-size: 12px; font-weight: bold; margin: 0 0 8px 0;">
-                Dragon Fly | AIPDA | 86020832
-            </p>
+        <!-- Judul tanpa icon brain -->
+        <h2>LI GENERATOR</h2>
+
+        <div class="badge-area">
+            <div class="flag-mini"></div>
+            <span class="badge-text">DRAGON FLY • AIPDA • 86020832</span>
         </div>
 
-        <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Khusus Tempel hasil Buat LI dari KRESNA AI di bawah ini:</p>
-        <p style="color: #ff0000; font-size: 10px; margin-bottom: 8px; font-weight: bold;">[Hapus dulu tanda seperti ini = [6/23/2026 1:34 AM] KRESNA AI]</p>
-        <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
+        <!-- Teks instruksi center -->
+        <p class="instruction-center">
+            Tempel hasil <span style="color: #00f2fe; font-weight:600;">KRESNA AI</span> di bawah ini:
+        </p>
+        
+        <div class="warning-text">
+            <i class="fas fa-exclamation-triangle"></i> Hapus dulu tanda seperti [6/23/2026 1:34 AM] KRESNA AI
+        </div>
+
+        <textarea id="narasiInput" placeholder="Paste teks laporan intelijen di sini..."></textarea>
 
         <button class="btn-neon" onclick="generateDocument()">
-            <i class="fas fa-file-invoice"></i> GENERATE
+            <i class="fas fa-file-shield"></i> GENERATE DOKUMEN
         </button>
 
         <div class="loading" id="loading">
-            <i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word di Browser...
+            <i class="fas fa-spinner fa-spin"></i> Memproses dan Mengenkripsi Dokumen...
         </div>
 
         <div class="result-box" id="resultBox">
-            <i class="fas fa-check-circle fa-3x" style="color: #00e676; margin-bottom:10px;"></i>
-            <h3>GENERATE BERHASIL!</h3>
-            <p style="color: #a0aec0; font-size: 13px; margin-top:-10px; margin-bottom: 20px;">Dokumen Laporan Informasi siap diunduh.</p>
+            <i class="fas fa-check-circle"></i>
+            <h3>BERHASIL DIBUAT</h3>
+            <p style="color: #cbd5e1; font-size: 0.9rem;">Laporan Informasi siap diunduh</p>
             <a id="linkDownloadDocx" href="#" class="btn-download">
-                <i class="fas fa-file-word"></i> DOWNLOAD DOCX
+                <i class="fas fa-download"></i> DOWNLOAD .DOCX
             </a>
         </div>
     </div>
@@ -176,48 +317,25 @@
     <script>
         function bersihkanDanUraiKresna(text) {
             let textClean = text;
-            
-            // Cari posisi "Bidang :" terakhir dan potong dari situ
             const bidangRegex = /\bBidang\s*:/g;
             let match, lastIdx = -1;
-            while ((match = bidangRegex.exec(text)) !== null) { 
-                lastIdx = match.index; 
-            }
-            if (lastIdx !== -1) { 
-                textClean = text.substring(lastIdx); 
-            }
+            while ((match = bidangRegex.exec(text)) !== null) { lastIdx = match.index; }
+            if (lastIdx !== -1) { textClean = text.substring(lastIdx); }
 
-            // Bersihkan timestamp dan label KRESNA AI
             textClean = textClean.replace(/\[[^\]]+\]\s*KRESNA AI:\s*/g, '').replace(/KRESNA AI:\s*/g, '');
-            
             const data = {};
 
-            // Setup tanggal dan waktu
             const now = new Date();
             const hariList = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
             const bulanList = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-            const hariIni = hariList[now.getDay()];
-            const tgl = now.getDate();
-            const bln = bulanList[now.getMonth() + 1];
-            const thn = now.getFullYear();
-            const jam = String(now.getHours()).padStart(2, '0');
-            const menit = String(now.getMinutes()).padStart(2, '0');
+            data['WAKTU'] = `${hariList[now.getDay()]}, ${now.getDate()} ${bulanList[now.getMonth()+1]} ${now.getFullYear()} Pukul ${String(now.getHours()).padStart(2,'0')}.${String(now.getMinutes()).padStart(2,'0')} WIB`;
+            data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth()+1]} ${now.getFullYear()}`;
+            data['BULAN_ROMAWI'] = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][now.getMonth()+1];
+            data['TAHUN'] = now.getFullYear().toString();
 
-            data['WAKTU'] = `${hariIni}, ${tgl} ${bln} ${thn} Pukul ${jam}.${menit} WIB`;
-            data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
+            function ambilPola(regex, src) { const m = src.match(regex); return m ? m[1].trim() : ""; }
 
-            const romawiList = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-            data['BULAN_ROMAWI'] = romawiList[now.getMonth() + 1];
-            data['TAHUN'] = thn.toString();
-
-            // Fungsi helper untuk mengambil pola regex
-            function ambilPola(regex, src) {
-                const m = src.match(regex);
-                return m ? m[1].trim() : "";
-            }
-
-            // Parse bagian-bagian utama
             data['BIDANG'] = ambilPola(/Bidang\s*:\s*(.*)/, textClean);
             data['PERIHAL'] = ambilPola(/Perihal\s*:\s*(.*)/, textClean);
             data['SUMBER'] = ambilPola(/A\.\s*Sumber Informasi\s*:\s*(.*)/, textClean);
@@ -225,22 +343,17 @@
             data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
             data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
 
-            // Parse FAKTA-FAKTA
             const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
+            data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
             if (faktaBlock) {
                 data['FAKTA_A'] = ambilPola(/(?:^|[\n\r])\s*A\.\s*([\s\S]*?)(?=(?:[\n\r]\s*B\.\s*)|$)/, faktaBlock);
                 data['FAKTA_B'] = ambilPola(/(?:^|[\n\r])\s*B\.\s*([\s\S]*?)(?=(?:[\n\r]\s*C\.\s*)|$)/, faktaBlock);
                 data['FAKTA_C'] = ambilPola(/(?:^|[\n\r])\s*C\.\s*([\s\S]*)/, faktaBlock);
-            } else {
-                data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
             }
 
-            // Parse PENDAPAT PELAPOR
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             const pendapatList = [];
-            
             if (pendapatBlock) {
-                // Bersihkan teks setelah poin terakhir (seperti tanda tangan)
                 let cleanPendapatBlock = pendapatBlock;
                 const cutOffPatterns = [
                     /\n\s*(?:Demikian|Dibuat|Dikeluarkan|Mengetahui|An\.|a\.n\.|TTD|Tembusan)[\s\S]*$/i,
@@ -248,41 +361,30 @@
                 ];
                 for (const pattern of cutOffPatterns) {
                     const matchCut = cleanPendapatBlock.match(pattern);
-                    if (matchCut) {
-                        cleanPendapatBlock = cleanPendapatBlock.substring(0, matchCut.index);
-                    }
+                    if (matchCut) cleanPendapatBlock = cleanPendapatBlock.substring(0, matchCut.index);
                 }
-                
-                const abjadList = "ABCDEFGH"; // maksimal H, sesuaikan template
+
+                const abjadList = "ABCDEFGH";
                 let i = 0;
                 while (i < abjadList.length) {
                     const char = abjadList[i];
                     const nextChar = abjadList[i + 1];
-                    let reg;
-                    if (nextChar) {
-                        reg = new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`, 'i');
-                    } else {
-                        reg = new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`, 'i');
-                    }
+                    const reg = nextChar 
+                        ? new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`, 'i')
+                        : new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`, 'i');
                     const val = ambilPola(reg, cleanPendapatBlock);
                     if (val && val.trim()) {
                         pendapatList.push({ char: char, isi: val.trim() });
                         i++;
-                    } else {
-                        break;
-                    }
+                    } else break;
                 }
             }
 
-            // Isi placeholder PENDAPAT_A sampai PENDAPAT_H
-            const maxPoin = 8; // asumsi template memiliki A sampai H
-            for (let i = 0; i < maxPoin; i++) {
-                const char = String.fromCharCode(65 + i); // A, B, C, ...
+            for (let i = 0; i < 8; i++) {
+                const char = String.fromCharCode(65 + i);
                 const item = pendapatList[i];
                 data[`PENDAPAT_${char}`] = item ? item.isi : "";
             }
-
-            // Simpan list untuk keperluan lain (debug)
             data['pendapatList'] = pendapatList;
             return data;
         }
@@ -292,70 +394,51 @@
             if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
             const generateBtn = document.querySelector('.btn-neon');
-            const originalBtnHtml = generateBtn.innerHTML;
+            const originalHtml = generateBtn.innerHTML;
             generateBtn.disabled = true;
-            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa Izin Lokasi...';
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa Kredensial...';
 
             let lokasiName = "Lokasi Tidak Diketahui";
-
             try {
-                // Izin lokasi
                 const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) {
-                        reject(new Error("Geolokasi tidak didukung."));
-                    } else {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 0
-                        });
-                    }
+                    if (!navigator.geolocation) reject(new Error("Geolokasi tidak didukung."));
+                    else navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
                 });
 
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('resultBox').style.display = 'none';
-                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sedang Memproses...';
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyusun Laporan...';
 
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
                 try {
                     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
                     const geoData = await geoRes.json();
-                    if (geoData && geoData.address) {
+                    if (geoData?.address) {
                         lokasiName = geoData.address.city || geoData.address.regency || geoData.address.county || geoData.address.town || geoData.address.state_district || "Lokasi Tidak Diketahui";
                         lokasiName = lokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
                     }
-                } catch (e) {
-                    console.error("Gagal mendapatkan nama lokasi:", e);
-                }
+                } catch (e) { console.error(e); }
             } catch (err) {
-                alert("Izin lokasi wajib diberikan untuk melakukan generate dokumen.");
+                alert("Izin lokasi diperlukan untuk generate dokumen.");
                 generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnHtml;
+                generateBtn.innerHTML = originalHtml;
                 return;
             }
 
             try {
                 const response = await fetch('./format_original.docx');
-                if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
+                if (!response.ok) throw new Error("Template tidak ditemukan.");
                 const arrayBuffer = await response.arrayBuffer();
-
                 const dataKomponen = bersihkanDanUraiKresna(text);
                 dataKomponen['LOKASI'] = lokasiName;
 
-                console.log("Data yang diparse:", dataKomponen);
-
                 const zip = new PizZip(arrayBuffer);
-
-                // Tidak ada modifikasi XML – biarkan struktur template apa adanya
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
                     paragraphLoop: true,
                     linebreaks: true
                 });
-
-                // Pastikan semua placeholder yang mungkin ada di template sudah terdefinisi
-                // (PENDAPAT_A..H sudah di-set di fungsi parsing)
                 doc.setData(dataKomponen);
                 doc.render();
 
@@ -368,21 +451,19 @@
                 document.getElementById('resultBox').style.display = 'block';
 
                 const downloadBtn = document.getElementById('linkDownloadDocx');
-                const newDownloadBtn = downloadBtn.cloneNode(true);
-                downloadBtn.parentNode.replaceChild(newDownloadBtn, downloadBtn);
-
-                newDownloadBtn.addEventListener('click', function (e) {
+                const newBtn = downloadBtn.cloneNode(true);
+                downloadBtn.parentNode.replaceChild(newBtn, downloadBtn);
+                newBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     window.saveAs(out, "Laporan_Informasi_Kresna.docx");
                     setTimeout(() => location.reload(), 1000);
                 });
-
             } catch (error) {
-                alert("Terjadi Kesalahan: " + error.message);
+                alert("Error: " + error.message);
                 console.error(error);
                 document.getElementById('loading').style.display = 'none';
                 generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnHtml;
+                generateBtn.innerHTML = originalHtml;
             }
         }
     </script>

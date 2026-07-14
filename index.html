@@ -339,76 +339,86 @@
                 // Modifikasi XML word/document.xml untuk paragraph loop PENDAPAT
                 try {
                     let docXmlText = zip.file("word/document.xml").asText();
+                    let parser = new DOMParser();
+                    let xmlDoc = parser.parseFromString(docXmlText, "application/xml");
+                    const NS_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
-                    let pRegex = /<w:p\b[^>]*>[\s\S]*?<\/w:p>/g;
-                    let lastIndex = 0;
-                    let parts = [];
-                    let match;
+                    let paragraphs = Array.from(xmlDoc.getElementsByTagNameNS(NS_W, "p"));
 
-                    while ((match = pRegex.exec(docXmlText)) !== null) {
-                        if (match.index > lastIndex) {
-                            parts.push({ type: "text", content: docXmlText.substring(lastIndex, match.index) });
-                        }
-                        parts.push({ type: "p", content: match[0] });
-                        lastIndex = pRegex.lastIndex;
-                    }
-                    if (lastIndex < docXmlText.length) {
-                        parts.push({ type: "text", content: docXmlText.substring(lastIndex) });
-                    }
+                    let firstPendapatIndex = -1;
+                    let lastPendapatIndex = -1;
 
-                    let firstPIndex = -1;
-                    let lastPIndex = -1;
-                    for (let i = 0; i < parts.length; i++) {
-                        if (parts[i].type === "p") {
-                            let textContent = parts[i].content.replace(/<[^>]+>/g, "");
-                            if (/PENDAPAT_[A-Z]/.test(textContent)) {
-                                if (firstPIndex === -1) firstPIndex = i;
-                                lastPIndex = i;
-                            }
-                        }
-                    }
-
-                    if (firstPIndex !== -1 && lastPIndex !== -1) {
-                        let deleteEndIndex = lastPIndex;
-                        for (let i = lastPIndex + 1; i < parts.length; i++) {
-                            if (parts[i].type === "text") continue;
-                            if (parts[i].type === "p") {
-                                let tc = parts[i].content.replace(/<[^>]+>/g, "").trim();
-                                if (tc === "") {
-                                    deleteEndIndex = i;
+                    for (let i = 0; i < paragraphs.length; i++) {
+                        let p = paragraphs[i];
+                        let textContent = p.textContent || "";
+                        if (textContent.includes("PENDAPAT_")) {
+                            let match = textContent.match(/PENDAPAT_([A-Z])/);
+                            if (match) {
+                                let char = match[1];
+                                if (char >= 'A' && char <= 'H') {
+                                    if (firstPendapatIndex === -1) firstPendapatIndex = i;
+                                    lastPendapatIndex = i;
                                 }
-                                break;
+                            }
+                        }
+                    }
+
+                    if (firstPendapatIndex !== -1 && lastPendapatIndex !== -1) {
+                        let pBasis = paragraphs[firstPendapatIndex];
+                        let pKosongBasis = paragraphs[firstPendapatIndex + 1];
+
+                        let pIsi = pBasis.cloneNode(true);
+                        let pKosong = pKosongBasis.cloneNode(true);
+
+                        // Edit teks pIsi -> {{#pendapatList}}{{isi}}
+                        let tElements = pIsi.getElementsByTagNameNS(NS_W, "t");
+                        if (tElements.length > 0) {
+                            tElements[0].textContent = "{{#pendapatList}}{{isi}}";
+                            for (let k = tElements.length - 1; k > 0; k--) {
+                                tElements[k].parentNode.removeChild(tElements[k]);
                             }
                         }
 
-                        let pA = parts[firstPIndex].content;
-                        let tRegex = /(<w:t(?: [^>]*)?>)([\s\S]*?)(<\/w:t>)/g;
-
-                        let startCalled = false;
-                        let newPA = pA.replace(tRegex, function (m, p1, p2, p3) {
-                            if (!startCalled) {
-                                startCalled = true;
-                                return p1 + "{{#pendapatList}}{{isi}}" + p3;
+                        // Edit teks pKosong -> {{/pendapatList}}
+                        let tElementsKosong = pKosong.getElementsByTagNameNS(NS_W, "t");
+                        if (tElementsKosong.length > 0) {
+                            tElementsKosong[0].textContent = "{{/pendapatList}}";
+                            for (let k = tElementsKosong.length - 1; k > 0; k--) {
+                                tElementsKosong[k].parentNode.removeChild(tElementsKosong[k]);
                             }
-                            return "";
-                        });
-
-                        let endCalled = false;
-                        let newPEnd = pA.replace(tRegex, function (m, p1, p2, p3) {
-                            if (!endCalled) {
-                                endCalled = true;
-                                return p1 + "{{/pendapatList}}" + p3;
+                        } else {
+                            let prefix = "";
+                            if (pBasis.tagName && pBasis.tagName.indexOf(":") !== -1) {
+                                prefix = pBasis.tagName.split(":")[0] + ":";
                             }
-                            return "";
-                        });
+                            let rElem = xmlDoc.createElementNS(NS_W, prefix + "r");
+                            let tElem = xmlDoc.createElementNS(NS_W, prefix + "t");
+                            tElem.textContent = "{{/pendapatList}}";
+                            rElem.appendChild(tElem);
+                            pKosong.appendChild(rElem);
+                        }
 
-                        parts.splice(firstPIndex, deleteEndIndex - firstPIndex + 1, {
-                            type: "p",
-                            content: newPA + "\n" + newPEnd
-                        });
+                        let parent = pBasis.parentNode;
+                        let nextSibling = paragraphs[lastPendapatIndex + 2] || null;
 
-                        let finalXml = parts.map(p => p.content).join("");
-                        zip.file("word/document.xml", finalXml);
+                        // Hapus paragraf pendapat A sampai H dan paragraf kosong setelah H (lastPendapatIndex + 1)
+                        for (let idx = firstPendapatIndex; idx <= lastPendapatIndex + 1; idx++) {
+                            let pToDelete = paragraphs[idx];
+                            if (pToDelete && pToDelete.parentNode) {
+                                pToDelete.parentNode.removeChild(pToDelete);
+                            }
+                        }
+
+                        if (nextSibling) {
+                            parent.insertBefore(pIsi, nextSibling);
+                            parent.insertBefore(pKosong, nextSibling);
+                        } else {
+                            parent.appendChild(pIsi);
+                            parent.appendChild(pKosong);
+                        }
+
+                        let serializedXml = new XMLSerializer().serializeToString(xmlDoc);
+                        zip.file("word/document.xml", serializedXml);
                     }
                 } catch (xmlError) {
                     console.error("Gagal memodifikasi XML pendukung pendapat block:", xmlError);

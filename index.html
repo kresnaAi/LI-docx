@@ -246,28 +246,37 @@
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             const pendapatList = [];
             if (pendapatBlock) {
-                // Cari semua poin abjad yang ada di blok pendapat (A. xxx, B. xxx, dst)
-                const poinRegex = /(?:^|[\n\r])\s*([A-Z])\.\s+([\s\S]*?)(?=(?:[\n\r]\s*[A-Z]\.\s+)|$)/g;
-                let poinMatch;
-                const seenChars = new Set();
-                while ((poinMatch = poinRegex.exec(pendapatBlock)) !== null) {
-                    const char = poinMatch[1];
-                    const isi = poinMatch[2].trim();
-                    // Skip jika kosong, duplikat huruf, atau isi duplikat
-                    if (!isi) continue;
-                    if (seenChars.has(char)) continue;
-                    if (pendapatList.some(p => p.isi === isi)) continue;
-                    seenChars.add(char);
-                    pendapatList.push({ char: char, isi: isi });
+                const abjadList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                let i = 0;
+                while (i < abjadList.length) {
+                    const char = abjadList[i];
+                    const nextChar = abjadList[i + 1];
+                    const reg = nextChar
+                        ? new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`)
+                        : new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`);
+
+                    const val = ambilPola(reg, pendapatBlock);
+                    if (val && val.trim()) {
+                        const trimmedVal = val.trim();
+                        const isDuplicate = pendapatList.some(p => p.isi === trimmedVal);
+                        if (isDuplicate) break;
+
+                        pendapatList.push({ char: char, isi: trimmedVal });
+                        i++;
+                    } else {
+                        break;
+                    }
                 }
             }
 
             data['pendapatList'] = pendapatList;
 
-            // Set semua PENDAPAT_X sesuai jumlah poin yang ditemukan (dinamis A-Z)
-            for (let idx = 0; idx < pendapatList.length; idx++) {
-                const char = pendapatList[idx].char;
-                data[`PENDAPAT_${char}`] = pendapatList[idx].isi;
+            // Backward compatibility untuk PENDAPAT_A s/d PENDAPAT_H
+            const abjadLegacy = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            for (let idx = 0; idx < abjadLegacy.length; idx++) {
+                const char = abjadLegacy[idx];
+                const item = pendapatList[idx];
+                data[`PENDAPAT_${char}`] = item ? item.isi : "";
             }
             return data;
         }
@@ -349,18 +358,12 @@
                     let firstIndex = -1;
                     let lastIndex = -1;
                     let templatePXml = "";
-                    let templateChar = 'A';
 
                     for (let i = 0; i < paragraphs.length; i++) {
-                        let cleanText = paragraphs[i].xml.replace(/<[^>]+>/g, '');
-                        if (cleanText.match(/PENDAPAT_[A-Z]/)) {
+                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
                             if (firstIndex === -1) {
                                 firstIndex = i;
                                 templatePXml = paragraphs[i].xml;
-                                const matchChar = cleanText.match(/PENDAPAT_([A-Z])/);
-                                if (matchChar) {
-                                    templateChar = matchChar[1];
-                                }
                             }
                             lastIndex = i;
                         }
@@ -379,6 +382,9 @@
                             }
                         }
 
+                        const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
+                        const templateChar = templateCharMatch ? templateCharMatch[1] : 'A';
+
                         let generatedXml = "";
                         const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
 
@@ -387,17 +393,8 @@
 
                             let newPXml = templatePXml.replace(new RegExp(`PENDAPAT_${templateChar}`, 'g'), `PENDAPAT_${char}`);
 
-                            let replacedLetter = false;
-                            const charRegex1 = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}([\\\\s\\\\u00A0]*\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
-                            newPXml = newPXml.replace(charRegex1, (match, p1, p2) => {
-                                replacedLetter = true;
-                                return p1 + char + p2;
-                            });
-
-                            if (!replacedLetter) {
-                                const charRegex2 = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}([\\\\s\\\\u00A0]*<\\\\/w:t>(?:<[^>]+>)*<w:t[^>]*>[\\\\s\\\\u00A0]*\\\\.)`);
-                                newPXml = newPXml.replace(charRegex2, `$1${char}$2`);
-                            }
+                            const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}(\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
+                            newPXml = newPXml.replace(hardcodedRegex, `$1${char}$2`);
 
                             generatedXml += newPXml;
 

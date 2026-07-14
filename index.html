@@ -254,24 +254,18 @@
 
             if (pendapatBlock) {
                 let pendapatList = [];
-                for (let i = 0; i < abjadFull.length; i++) {
-                    const char = abjadFull[i];
-                    const nextChar = abjadFull[i + 1];
+                const regexPoin = /(?:^|\r?\n)\s*([A-Z])\.\s*([\s\S]*?)(?=(?:\r?\n\s*[A-Z]\.\s*|$))/g;
+                let matchPoin;
 
-                    let reg;
-                    if (nextChar && pendapatBlock.match(new RegExp(`(?:^|\\s)${nextChar}\\.\\s+`))) {
-                        reg = new RegExp(`(?:^|\\s)${char}\\.\\s+([\\s\\S]*?)(?=(?:^|\\s)${nextChar}\\.\\s+)`);
-                    } else {
-                        reg = new RegExp(`(?:^|\\s)${char}\\.\\s+([\\s\\S]*)`);
-                    }
+                while ((matchPoin = regexPoin.exec(pendapatBlock)) !== null) {
+                    const char = matchPoin[1];
+                    const isi = matchPoin[2].trim();
 
-                    const hasil = ambilPola(reg, pendapatBlock);
-                    if (hasil) {
-                        data[`PENDAPAT_${char}`] = hasil;
+                    // Hanya tambahkan jika isinya tidak kosong
+                    if (isi) {
+                        data[`PENDAPAT_${char}`] = isi;
                         data[`has_PENDAPAT_${char}`] = true;
-                        pendapatList.push(`${char}.\t${hasil}`);
-                    } else {
-                        break;
+                        pendapatList.push(`${char}.\t${isi}`);
                     }
                 }
                 data['PENDAPAT_ALL'] = pendapatList.join("\n\n");

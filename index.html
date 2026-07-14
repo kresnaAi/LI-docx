@@ -375,22 +375,7 @@
                         for (let k = lastIndex + 1; k < paragraphs.length; k++) {
                             let pXml = paragraphs[k].xml;
                             let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
-                            let cleanText = textContent.replace(/&nbsp;/g, ' ').replace(/\u00A0/g, ' ').trim();
-
-                            let isTrailingPoint = false;
-                            if (cleanText.length === 0) {
-                                isTrailingPoint = true;
-                            } else if (/^[A-Z][\.\t\s]/.test(cleanText) && cleanText.length > 2) {
-                                isTrailingPoint = true;
-                            } else if (pXml.includes('w:numPr')) {
-                                isTrailingPoint = true;
-                            }
-
-                            if (cleanText.startsWith('IV.') || cleanText.toLowerCase().includes('penutup') || /^IV[\.\s]/i.test(cleanText)) {
-                                break;
-                            }
-
-                            if (isTrailingPoint) {
+                            if (textContent.length === 0) {
                                 endBoundary = paragraphs[k].end;
                             } else {
                                 break;

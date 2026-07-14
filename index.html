@@ -259,6 +259,8 @@
             return data;
         }
 
+
+
         async function executeLocationRequest(silent = false) {
             let modalBtn = null;
             let originalText = "";
@@ -279,7 +281,7 @@
                     } else {
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
                             enableHighAccuracy: true,
-                            timeout: 10000,
+                            timeout: 8000,
                             maximumAge: 0
                         });
                     }
@@ -306,6 +308,28 @@
                     generateDocumentBase();
                 }
             } catch (err) {
+                // Fallback: Jika geolokasi sensor ditolak/diblokir oleh browser lokal, gunakan IP Geolocation
+                try {
+                    const ipRes = await fetch('https://ipapi.co/json/');
+                    if (ipRes.ok) {
+                        const ipData = await ipRes.json();
+                        if (ipData && (ipData.city || ipData.region)) {
+                            globalLokasiName = ipData.city || ipData.region || "Lokasi Tidak Diketahui";
+                            globalLokasiName = globalLokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
+
+                            isLocationGranted = true;
+
+                            if (!silent) {
+                                closeLocationModal();
+                                generateDocumentBase();
+                            }
+                            return;
+                        }
+                    }
+                } catch (ipErr) {
+                    console.error("Gagal mengambil lokasi via IP:", ipErr);
+                }
+
                 if (!silent) {
                     alert("Akses lokasi ditolak atau bermasalah. Pastikan GPS aktif dan setujui izin pada browser/sistem.");
                     closeLocationModal();

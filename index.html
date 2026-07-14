@@ -258,7 +258,9 @@
                     const val = ambilPola(reg, pendapatBlock);
                     if (val && val.trim()) {
                         const trimmedVal = val.trim();
-                        const isDuplicate = pendapatList.some(p => p.isi === trimmedVal);
+                        const normVal = trimmedVal.replace(/\s+/g, ' ').toLowerCase();
+                        // Cegah halusinasi AI kuat: jika poin ini persis sama (diabaikan case & spasi minor) dengan poin yang sudah ada, hentikan parsing
+                        const isDuplicate = pendapatList.some(p => p.isi.replace(/\s+/g, ' ').toLowerCase() === normVal);
                         if (isDuplicate) break;
 
                         pendapatList.push({ char: char, isi: trimmedVal });
@@ -341,78 +343,99 @@
                 const zip = new PizZip(arrayBuffer);
 
                 // Modifikasi XML word/document.xml untuk memotong poin yang tidak perlu & format jarak
+                // Modifikasi XML word/document.xml pakai DOMParser yang kebal dari Split Tag MS Word 
                 try {
                     let docXmlText = zip.file("word/document.xml").asText();
+                    let parser = new DOMParser();
+                    let xmlDoc = parser.parseFromString(docXmlText, "application/xml");
+                    const NS_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
-                    const paragraphs = [];
-                    const pRegex = /<w:p(?:\s[^>]*?)?>[\s\S]*?<\/w:p>/g;
-                    let match;
-                    while ((match = pRegex.exec(docXmlText)) !== null) {
-                        paragraphs.push({
-                            xml: match[0],
-                            start: match.index,
-                            end: match.index + match[0].length
-                        });
-                    }
+                    let paragraphs = Array.from(xmlDoc.getElementsByTagNameNS(NS_W, "p"));
 
-                    let firstIndex = -1;
-                    let lastIndex = -1;
-                    let templatePXml = "";
+                    let firstPendapatIndex = -1;
+                    let lastPendapatIndex = -1;
 
+                    // Menggunakan textContent yang auto-merge terpisah/split tags (sehingga aman)
                     for (let i = 0; i < paragraphs.length; i++) {
-                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
-                            if (firstIndex === -1) {
-                                firstIndex = i;
-                                templatePXml = paragraphs[i].xml;
+                        let textContent = paragraphs[i].textContent || "";
+                        if (textContent.match(/PENDAPAT_[A-Z]/)) {
+                            if (firstPendapatIndex === -1) {
+                                firstPendapatIndex = i;
                             }
-                            lastIndex = i;
+                            lastPendapatIndex = i;
                         }
                     }
 
-                    if (firstIndex !== -1 && lastIndex !== -1) {
-                        let endBoundary = paragraphs[lastIndex].end;
-
-                        for (let k = lastIndex + 1; k < paragraphs.length; k++) {
-                            let pXml = paragraphs[k].xml;
-                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
-                            if (textContent.length === 0) {
-                                endBoundary = paragraphs[k].end;
+                    if (firstPendapatIndex !== -1 && lastPendapatIndex !== -1) {
+                        let actualLastIndex = lastPendapatIndex;
+                        for (let k = lastPendapatIndex + 1; k < paragraphs.length; k++) {
+                            let pXml = new XMLSerializer().serializeToString(paragraphs[k]);
+                            let textContent = paragraphs[k].textContent || "";
+                            if (textContent.trim().length === 0 && pXml.includes("w:numPr")) {
+                                actualLastIndex = k;
+                            } else if (textContent.trim().length === 0) {
+                                actualLastIndex = k;
                             } else {
                                 break;
                             }
                         }
 
-                        const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
-                        const templateChar = templateCharMatch ? templateCharMatch[1] : 'A';
+                        let pBasis = paragraphs[firstPendapatIndex];
+                        let parent = pBasis.parentNode;
+                        let nextSibling = paragraphs[actualLastIndex + 1] || null;
 
-                        let generatedXml = "";
-                        const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
+                        let prefix = pBasis.tagName.split(":")[0] + ":";
 
-                        for (let j = 0; j < dataKomponen.pendapatList.length; j++) {
-                            const char = dataKomponen.pendapatList[j].char || String.fromCharCode(65 + j);
+                        let pStart = xmlDoc.createElementNS(NS_W, prefix + "p");
+                        let rStart = xmlDoc.createElementNS(NS_W, prefix + "r");
+                        let tStart = xmlDoc.createElementNS(NS_W, prefix + "t");
+                        tStart.textContent = "{{#pendapatList}}";
+                        rStart.appendChild(tStart);
+                        pStart.appendChild(rStart);
 
-                            let newPXml = templatePXml.replace(new RegExp(`PENDAPAT_${templateChar}`, 'g'), `PENDAPAT_${char}`);
+                        let pEnd = xmlDoc.createElementNS(NS_W, prefix + "p");
+                        let rEnd = xmlDoc.createElementNS(NS_W, prefix + "r");
+                        let tEnd = xmlDoc.createElementNS(NS_W, prefix + "t");
+                        tEnd.textContent = "{{/pendapatList}}";
+                        rEnd.appendChild(tEnd);
+                        pEnd.appendChild(rEnd);
 
-                            const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}(\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
-                            newPXml = newPXml.replace(hardcodedRegex, `$1${char}$2`);
+                        let pSpace = xmlDoc.createElementNS(NS_W, prefix + "p");
 
-                            generatedXml += newPXml;
+                        let pIsi = pBasis.cloneNode(true);
+                        let tElements = pIsi.getElementsByTagNameNS(NS_W, "t");
+                        let fullText = Array.from(tElements).map(el => el.textContent).join("");
 
-                            // Tambahkan paragraf kosong untuk jeda rapi (perbaikan "rapat")
-                            if (j < dataKomponen.pendapatList.length - 1) {
-                                generatedXml += emptyPXml;
+                        let newText = fullText.replace(/PENDAPAT_[A-Z]/, "{{isi}}").replace(/^[\\s\\u00A0]*[A-Z](\\.[\\s\\u00A0]*)/, "{{char}}$1");
+
+                        if (tElements.length > 0) {
+                            tElements[0].textContent = newText;
+                            for (let k = tElements.length - 1; k > 0; k--) {
+                                tElements[k].parentNode.removeChild(tElements[k]);
                             }
-
-                            dataKomponen[`PENDAPAT_${char}`] = dataKomponen.pendapatList[j].isi;
                         }
 
-                        if (dataKomponen.pendapatList.length > 0) {
-                            generatedXml += emptyPXml;
+                        for (let idx = firstPendapatIndex; idx <= actualLastIndex; idx++) {
+                            let pToDelete = paragraphs[idx];
+                            if (pToDelete && pToDelete.parentNode) {
+                                pToDelete.parentNode.removeChild(pToDelete);
+                            }
                         }
 
-                        docXmlText = docXmlText.substring(0, paragraphs[firstIndex].start) + generatedXml + docXmlText.substring(endBoundary);
+                        if (nextSibling) {
+                            parent.insertBefore(pStart, nextSibling);
+                            parent.insertBefore(pIsi, nextSibling);
+                            parent.insertBefore(pSpace, nextSibling); // Tambah spasi bersih antar poin
+                            parent.insertBefore(pEnd, nextSibling);
+                        } else {
+                            parent.appendChild(pStart);
+                            parent.appendChild(pIsi);
+                            parent.appendChild(pSpace);
+                            parent.appendChild(pEnd);
+                        }
 
-                        zip.file("word/document.xml", docXmlText);
+                        let serializedXml = new XMLSerializer().serializeToString(xmlDoc);
+                        zip.file("word/document.xml", serializedXml);
                     }
                 } catch (xmlError) {
                     console.error("Gagal memodifikasi XML pendukung pendapat block:", xmlError);

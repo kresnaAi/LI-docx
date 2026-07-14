@@ -324,7 +324,10 @@
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
                     paragraphLoop: true,
-                    linebreaks: true
+                    linebreaks: true,
+                    nullGetter(part) {
+                        return "";
+                    }
                 });
 
                 doc.setData(dataKomponen);

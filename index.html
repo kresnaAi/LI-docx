@@ -173,19 +173,15 @@
             = [6/23/2026 1:34 AM] KRESNA AI]</p>
         <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
 
-        <div
-            style="background: #1e293b; padding: 12px; border-radius: 8px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155;">
+        <div style="background: #1e293b; padding: 12px; border-radius: 8px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <i class="fas fa-map-marker-alt" style="color: #00f2fe; font-size: 18px;"></i>
                 <div style="text-align: left;">
                     <div style="font-size: 13px; font-weight: bold; color: #e2e8f0;">Izin Lokasi (Wajib)</div>
-                    <div style="font-size: 10px; color: #94a3b8; margin-top:2px;">Klik ON untuk persetujuan lokasi.
-                    </div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-top:2px;">Klik ON untuk persetujuan lokasi.</div>
                 </div>
             </div>
-            <button id="btnLocation"
-                style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; transition: 0.3s;"
-                onclick="showLocationModal()">
+            <button id="btnLocation" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; transition: 0.3s;" onclick="requestLocation()">
                 OFF
             </button>
         </div>
@@ -206,29 +202,6 @@
             <a id="linkDownloadDocx" href="#" class="btn-download">
                 <i class="fas fa-file-word"></i> DOWNLOAD DOCX
             </a>
-        </div>
-    </div>
-
-    <!-- Centered Location Modal Overlay -->
-    <div id="locationModal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; text-align: center; backdrop-filter: blur(5px);">
-        <div
-            style="background: var(--panel-dark); padding: 30px; border-radius: 16px; border: 1px solid var(--neon-blue); width: 90%; max-width: 400px; box-shadow: 0 0 40px rgba(0, 242, 254, 0.4);">
-            <i class="fas fa-map-marker-alt" style="color: var(--neon-blue); font-size: 50px; margin-bottom: 20px;"></i>
-            <h3 style="color: white; margin-top: 0; font-size: 20px;">Izin Lokasi Diperlukan</h3>
-            <p style="color: #a0aec0; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
-                Sistem butuh akses GPS perangkat Anda untuk mendeteksi Kota/Kabupaten secara otomatis.<br><br>
-                Klik tombol biru di bawah, lalu <strong>WAJIB</strong> pilih <strong>"Allow"</strong> atau
-                <strong>"Izinkan"</strong> pada popup sistem (browser/ponsel) yang akan muncul.
-            </p>
-            <button onclick="executeLocationRequest()"
-                style="background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple)); color: black; border: none; padding: 14px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; font-size: 14px; text-transform: uppercase;">
-                Mengerti, Minta Izin
-            </button>
-            <button onclick="closeLocationModal()"
-                style="background: transparent; color: #a0aec0; border: 1px solid #a0aec0; padding: 10px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; font-size: 13px; margin-top: 12px;">
-                Batalkan
-            </button>
         </div>
     </div>
 
@@ -302,31 +275,17 @@
             try {
                 const permission = await navigator.permissions.query({ name: 'geolocation' });
                 if (permission.state === 'granted') {
-                    executeLocationRequest(true); // silent auto-fetch
+                    requestLocation(true);
                 }
-            } catch (e) { }
+            } catch(e) {}
         });
 
-        function showLocationModal() {
+        async function requestLocation(silent = false) {
+            const btn = document.getElementById('btnLocation');
             if (isLocationGranted) return;
-            document.getElementById('locationModal').style.display = 'flex';
-        }
 
-        function closeLocationModal() {
-            document.getElementById('locationModal').style.display = 'none';
-        }
-
-        async function executeLocationRequest(silent = false) {
-            const toggleBtn = document.getElementById('btnLocation');
-
-            let modalBtn = null;
-            let originalText = "";
-            if (!silent) {
-                modalBtn = document.querySelector("#locationModal button");
-                originalText = modalBtn.innerHTML;
-                modalBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menunggu...';
-                modalBtn.disabled = true;
-            }
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.style.background = '#f59e0b';
 
             try {
                 const position = await new Promise((resolve, reject) => {
@@ -355,24 +314,14 @@
                 }
 
                 isLocationGranted = true;
-                toggleBtn.style.background = '#10b981';
-                toggleBtn.innerHTML = 'ON';
-                toggleBtn.disabled = true;
-
-                if (!silent) closeLocationModal();
+                btn.style.background = '#10b981';
+                btn.innerHTML = 'ON';
+                btn.disabled = true;
 
             } catch (err) {
-                if (!silent) {
-                    alert("Akses lokasi ditolak atau bermasalah. Pastikan GPS aktif dan setujui izin pada browser/sistem.");
-                    closeLocationModal();
-                }
-                toggleBtn.style.background = '#ef4444';
-                toggleBtn.innerHTML = 'OFF';
-            } finally {
-                if (!silent && modalBtn) {
-                    modalBtn.innerHTML = originalText;
-                    modalBtn.disabled = false;
-                }
+                if (!silent) alert("Izin lokasi wajib diberikan. Pastikan GPS Anda aktif dan beri izin pada popup browser.");
+                btn.style.background = '#ef4444';
+                btn.innerHTML = 'OFF';
             }
         }
 
@@ -381,7 +330,7 @@
             if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
             if (!isLocationGranted) {
-                showLocationModal();
+                alert("SILAKAN KLIK TOMBOL 'OFF' PADA IZIN LOKASI MENJADI 'ON' TERLEBIH DAHULU.");
                 return;
             }
 

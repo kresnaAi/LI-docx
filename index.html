@@ -360,7 +360,7 @@
                     let templatePXml = "";
 
                     for (let i = 0; i < paragraphs.length; i++) {
-                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
+                        if (paragraphs[i].xml.match(/PENDAPAT_[A-H]/)) {
                             if (firstIndex === -1) {
                                 firstIndex = i;
                                 templatePXml = paragraphs[i].xml;
@@ -374,7 +374,7 @@
 
                         for (let k = lastIndex + 1; k < paragraphs.length; k++) {
                             let pXml = paragraphs[k].xml;
-                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
+                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-H]/g, '').trim();
                             if (textContent.length === 0) {
                                 endBoundary = paragraphs[k].end;
                             } else {
@@ -382,7 +382,7 @@
                             }
                         }
 
-                        const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
+                        const templateCharMatch = templatePXml.match(/PENDAPAT_([A-H])/);
                         const templateChar = templateCharMatch ? templateCharMatch[1] : 'A';
 
                         let generatedXml = "";

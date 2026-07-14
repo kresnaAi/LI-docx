@@ -142,7 +142,19 @@
             margin-top: 15px; letter-spacing: 1px; transition: 0.3s;
             box-shadow: 0 8px 18px rgba(16,185,129,0.3);
         }
-        .btn-download:hover { background: #059669; box-shadow: 0 12px 25px rgba(16,185,129,0.5); transform: translateY(-2px); }
+        .btn-download i {
+            color: #fff; /* Ikon putih, sama dengan teks */
+            transition: color 0.3s;
+        }
+        .btn-download:hover {
+            background: #059669;
+            box-shadow: 0 12px 25px rgba(16,185,129,0.5);
+            transform: translateY(-2px);
+            color: #fff; /* pastikan teks tetap putih */
+        }
+        .btn-download:hover i {
+            color: #fff; /* ikon tetap putih saat hover */
+        }
 
         .warning-text { color: #f87171; font-size: 0.75rem; margin-bottom: 12px; font-weight: 500; text-align: center; }
         .instruction-center { color: #94a3b8; font-size: 14px; margin-bottom: 5px; text-align: center; }
@@ -190,7 +202,7 @@
         <div class="auth-box">
             <h3><i class="fas fa-lock"></i> AKSES TERBATAS</h3>
             <p style="margin:10px 0;">Halaman ini hanya untuk domain resmi.</p>
-            <p>Hubungi <b>8ambang4rianto@gmail.com</b> untuk mendapatkan kode otentikasi.</p>
+            <p>Hubungi <b>Aipda Bambang Arianto</b> untuk mendapatkan kode otentikasi.</p>
             <input type="text" id="authCode" placeholder="Masukkan kode rahasia">
             <button onclick="verifyAuth()">Verifikasi</button>
             <p id="authError" style="color:red;margin-top:8px;display:none;">Kode salah!</p>
@@ -201,7 +213,7 @@
         <h2>LI GENERATOR</h2>
         <div class="badge-area">
             <div class="flag-mini"></div>
-            <!-- Pastikan bullet menggunakan karakter asli "•" -->
+            <!-- Pastikan bullet menggunakan karakter asli "â¢" diubah menjadi • -->
             <span class="badge-text">DRAGON FLY • AIPDA • <span id="_x8602"></span></span>
         </div>
         <p class="instruction-center">Tempel hasil <span style="color:#00f2fe;font-weight:600">KRESNA AI</span> di bawah ini:</p>
@@ -232,7 +244,7 @@
             async function _G(){var tx=document.getElementById('narasiInput').value;if(!tx)return alert('Harap masukkan narasi terlebih dahulu.');var btn=document.querySelector('.btn-neon');var org=btn.innerHTML;btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Memeriksa Kredensial...';var loc='Lokasi Tidak Diketahui';try{var pos=await new Promise((rs,rj)=>{if(!navigator.geolocation)rj(new Error('Geolokasi tidak didukung.'));else navigator.geolocation.getCurrentPosition(rs,rj,{enableHighAccuracy:true,timeout:10000,maximumAge:0});});document.getElementById('loading').style.display='block';document.getElementById('resultBox').style.display='none';btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Menyusun Laporan...';var lat=pos.coords.latitude,lon=pos.coords.longitude;try{var gr=await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat='+lat+'&lon='+lon);var gd=await gr.json();if(gd?.address){loc=gd.address.city||gd.address.regency||gd.address.county||gd.address.town||gd.address.state_district||'Lokasi Tidak Diketahui';loc=loc.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i,'').trim();}}catch(e){console.error(e);}}catch(e){alert('Izin lokasi diperlukan untuk generate dokumen.');btn.disabled=false;btn.innerHTML=org;return;}try{var resp=await fetch('./format_original.docx');if(!resp.ok)throw new Error('Template tidak ditemukan.');var buf=await resp.arrayBuffer();var data=_X(tx);data['LOKASI']=loc;var zip=new PizZip(buf);var doc=new window.docxtemplater(zip,{delimiters:{start:'{{',end:'}}'},paragraphLoop:true,linebreaks:true});doc.setData(data);doc.render();var out=doc.getZip().generate({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});document.getElementById('loading').style.display='none';document.getElementById('resultBox').style.display='block';var dw=document.getElementById('linkDownloadDocx');var nd=dw.cloneNode(true);dw.parentNode.replaceChild(nd,dw);nd.addEventListener('click',function(e){e.preventDefault();window.saveAs(out,'Laporan_Informasi_Kresna.docx');setTimeout(function(){location.reload();},1000);});}catch(e){alert('Error: '+e.message);console.error(e);document.getElementById('loading').style.display='none';btn.disabled=false;btn.innerHTML=org;}}
             window._G=_G;
         })();
-        function verifyAuth(){if(document.getElementById('authCode').value==='8ambang4rianto'){document.getElementById('authOverlay').classList.remove('active');document.getElementById('mainContainer').style.display='';location.reload();}else{document.getElementById('authError').style.display='block';}}
+        function verifyAuth(){if(document.getElementById('authCode').value==='xxx'){document.getElementById('authOverlay').classList.remove('active');document.getElementById('mainContainer').style.display='';location.reload();}else{document.getElementById('authError').style.display='block';}}
     </script>
 </body>
 </html>

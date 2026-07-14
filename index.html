@@ -218,6 +218,10 @@
 
             data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
 
+            const romawiList = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+            data['BULAN_ROMAWI'] = romawiList[now.getMonth() + 1];
+            data['TAHUN'] = thn.toString();
+
             function ambilPola(regex, src) {
                 const m = src.match(regex);
                 return m ? m[1].trim() : "";

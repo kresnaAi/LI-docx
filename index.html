@@ -128,7 +128,6 @@
             const pendapatBlockRaw = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             const pendapatList = [];
             if (pendapatBlockRaw) {
-                // Potong setelah pola penutup umum (IV., Demikian, dll.)
                 let cleanBlock = pendapatBlockRaw;
                 const endPatterns = [
                     /\nIV\.\s/, /\nDemikian\s/, /\nDibuat\s/, /\nDikeluarkan\s/,
@@ -152,11 +151,11 @@
             }
             data['pendapatList'] = pendapatList;
 
-            // Isi placeholder PENDAPAT_A s/d PENDAPAT_H (backward compatibility)
-            const abjadLegacy = ['A','B','C','D','E','F','G','H'];
-            for (let idx = 0; idx < abjadLegacy.length; idx++) {
-                const char = abjadLegacy[idx];
-                const item = pendapatList[idx];
+            // Isi placeholder PENDAPAT_A s/d PENDAPAT_Z (kosongkan yang tidak ada)
+            const abjad = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            for (let i = 0; i < abjad.length; i++) {
+                const char = abjad[i];
+                const item = pendapatList.find(p => p.char === char);
                 data[`PENDAPAT_${char}`] = item ? item.isi : "";
             }
             return data;
@@ -204,50 +203,85 @@
                 dataKomponen['LOKASI'] = lokasiName;
 
                 const zip = new PizZip(arrayBuffer);
-                // Modifikasi XML DOCX sesuai jumlah poin pendapat
+                // ========== MODIFIKASI XML: HAPUS SEMUA PARAGRAF PENDAPAT LALU BUAT ULANG ==========
                 try {
                     let docXmlText = zip.file("word/document.xml").asText();
                     const paragraphs = [];
                     const pRegex = /<w:p(?:\s[^>]*?)?>[\s\S]*?<\/w:p>/g;
                     let m;
-                    while ((m = pRegex.exec(docXmlText)) !== null) paragraphs.push({ xml: m[0], start: m.index, end: m.index + m[0].length });
+                    while ((m = pRegex.exec(docXmlText)) !== null) {
+                        paragraphs.push({ xml: m[0], start: m.index, end: m.index + m[0].length });
+                    }
 
-                    let firstIdx = -1, lastIdx = -1, templatePXml = "";
+                    // Temukan SEMUA paragraf yang mengandung "PENDAPAT_"
+                    const pendapatIndices = [];
                     for (let i = 0; i < paragraphs.length; i++) {
-                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
-                            if (firstIdx === -1) { firstIdx = i; templatePXml = paragraphs[i].xml; }
-                            lastIdx = i;
+                        if (paragraphs[i].xml.includes('PENDAPAT_')) {
+                            pendapatIndices.push(i);
                         }
                     }
-                    if (firstIdx !== -1 && lastIdx !== -1 && dataKomponen.pendapatList.length > 0) {
+
+                    if (pendapatIndices.length > 0 && dataKomponen.pendapatList.length > 0) {
+                        const firstIdx = pendapatIndices[0];
+                        const lastIdx = pendapatIndices[pendapatIndices.length - 1];
+                        // Perluas hingga paragraf kosong setelah lastIdx (untuk spasi)
                         let endBoundary = paragraphs[lastIdx].end;
                         for (let k = lastIdx + 1; k < paragraphs.length; k++) {
-                            const txt = paragraphs[k].xml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
-                            if (txt === "") endBoundary = paragraphs[k].end; else break;
+                            const txt = paragraphs[k].xml.replace(/<[^>]+>/g, '').trim();
+                            if (txt === '') {
+                                endBoundary = paragraphs[k].end;
+                            } else {
+                                break;
+                            }
                         }
-                        let generatedXml = "";
+
+                        // Ambil template paragraf pertama sebagai pola
+                        const templatePXml = paragraphs[firstIdx].xml;
+
+                        // Bangun ulang XML untuk semua poin pendapat
+                        let generatedXml = '';
                         const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
                         for (let j = 0; j < dataKomponen.pendapatList.length; j++) {
                             const item = dataKomponen.pendapatList[j];
                             let newPXml = templatePXml.replace(/PENDAPAT_[A-Z]/g, `PENDAPAT_${item.char}`);
-                            const tplChar = templatePXml.match(/PENDAPAT_([A-Z])/)?.[1];
-                            if (tplChar) {
+                            // Ganti karakter hardcoded (A. -> B. dst.)
+                            const tplCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
+                            if (tplCharMatch) {
+                                const tplChar = tplCharMatch[1];
                                 const hardRx = new RegExp(`(<w:t[^>]*>[\\s\\u00A0]*)${tplChar}(\\.)`, 'g');
                                 newPXml = newPXml.replace(hardRx, `$1${item.char}$2`);
                             }
                             generatedXml += newPXml;
-                            if (j < dataKomponen.pendapatList.length - 1) generatedXml += emptyPXml;
+                            if (j < dataKomponen.pendapatList.length - 1) {
+                                generatedXml += emptyPXml; // spasi antar poin
+                            }
                         }
+                        // Tambahkan satu paragraf kosong di akhir
                         generatedXml += emptyPXml;
-                        docXmlText = docXmlText.substring(0, paragraphs[firstIdx].start) + generatedXml + docXmlText.substring(endBoundary);
+
+                        // Hapus blok lama dan sisipkan yang baru
+                        docXmlText = docXmlText.substring(0, paragraphs[firstIdx].start) +
+                                     generatedXml +
+                                     docXmlText.substring(endBoundary);
+
                         zip.file("word/document.xml", docXmlText);
                     }
-                } catch (xmlErr) { console.error("XML mod error:", xmlErr); }
+                } catch (xmlErr) {
+                    console.error("XML mod error:", xmlErr);
+                }
 
-                const doc = new window.docxtemplater(zip, { delimiters: { start: "{{", end: "}}" }, paragraphLoop: true, linebreaks: true });
+                const doc = new window.docxtemplater(zip, {
+                    delimiters: { start: "{{", end: "}}" },
+                    paragraphLoop: true,
+                    linebreaks: true
+                });
                 doc.setData(dataKomponen);
                 doc.render();
-                const out = doc.getZip().generate({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+
+                const out = doc.getZip().generate({
+                    type: "blob",
+                    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                });
 
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('resultBox').style.display = 'block';

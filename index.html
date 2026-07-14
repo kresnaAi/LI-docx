@@ -246,37 +246,28 @@
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             const pendapatList = [];
             if (pendapatBlock) {
-                const abjadList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                let i = 0;
-                while (i < abjadList.length) {
-                    const char = abjadList[i];
-                    const nextChar = abjadList[i + 1];
-                    const reg = nextChar
-                        ? new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`)
-                        : new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`);
-
-                    const val = ambilPola(reg, pendapatBlock);
-                    if (val && val.trim()) {
-                        const trimmedVal = val.trim();
-                        const isDuplicate = pendapatList.some(p => p.isi === trimmedVal);
-                        if (isDuplicate) break;
-
-                        pendapatList.push({ char: char, isi: trimmedVal });
-                        i++;
-                    } else {
-                        break;
-                    }
+                // Cari semua poin abjad yang ada di blok pendapat (A. xxx, B. xxx, dst)
+                const poinRegex = /(?:^|[\n\r])\s*([A-Z])\.\s+([\s\S]*?)(?=(?:[\n\r]\s*[A-Z]\.\s+)|$)/g;
+                let poinMatch;
+                const seenChars = new Set();
+                while ((poinMatch = poinRegex.exec(pendapatBlock)) !== null) {
+                    const char = poinMatch[1];
+                    const isi = poinMatch[2].trim();
+                    // Skip jika kosong, duplikat huruf, atau isi duplikat
+                    if (!isi) continue;
+                    if (seenChars.has(char)) continue;
+                    if (pendapatList.some(p => p.isi === isi)) continue;
+                    seenChars.add(char);
+                    pendapatList.push({ char: char, isi: isi });
                 }
             }
 
             data['pendapatList'] = pendapatList;
 
-            // Backward compatibility untuk PENDAPAT_A s/d PENDAPAT_H
-            const abjadLegacy = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-            for (let idx = 0; idx < abjadLegacy.length; idx++) {
-                const char = abjadLegacy[idx];
-                const item = pendapatList[idx];
-                data[`PENDAPAT_${char}`] = item ? item.isi : "";
+            // Set semua PENDAPAT_X sesuai jumlah poin yang ditemukan (dinamis A-Z)
+            for (let idx = 0; idx < pendapatList.length; idx++) {
+                const char = pendapatList[idx].char;
+                data[`PENDAPAT_${char}`] = pendapatList[idx].isi;
             }
             return data;
         }

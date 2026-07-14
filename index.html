@@ -258,11 +258,9 @@
                     const val = ambilPola(reg, pendapatBlock);
                     if (val && val.trim()) {
                         const trimmedVal = val.trim();
-                        // Cegah halusinasi AI: jika poin ini persis sama dengan poin yang sudah ada, hentikan parsing
                         const isDuplicate = pendapatList.some(p => p.isi === trimmedVal);
-                        if (isDuplicate) {
-                            break;
-                        }
+                        if (isDuplicate) break;
+
                         pendapatList.push({ char: char, isi: trimmedVal });
                         i++;
                     } else {
@@ -342,7 +340,7 @@
 
                 const zip = new PizZip(arrayBuffer);
 
-                // Modifikasi XML word/document.xml untuk menghapus teks kosong dan menambah poin dinamis
+                // Modifikasi XML word/document.xml untuk memotong poin yang tidak perlu & format jarak
                 try {
                     let docXmlText = zip.file("word/document.xml").asText();
 
@@ -374,11 +372,9 @@
                     if (firstIndex !== -1 && lastIndex !== -1) {
                         let endBoundary = paragraphs[lastIndex].end;
 
-                        // Menghitung dan menghapus list / paragraf kosong setelah placeholder terakhir
                         for (let k = lastIndex + 1; k < paragraphs.length; k++) {
                             let pXml = paragraphs[k].xml;
                             let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
-                            // Jika ada teks selain PENDAPAT_, berarti sudah masuk seksi berikutnya (contoh: IV. PENUTUP)
                             if (textContent.length === 0) {
                                 endBoundary = paragraphs[k].end;
                             } else {
@@ -393,7 +389,7 @@
                         const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
 
                         for (let j = 0; j < dataKomponen.pendapatList.length; j++) {
-                            const char = dataKomponen.pendapatList[j].char;
+                            const char = dataKomponen.pendapatList[j].char || String.fromCharCode(65 + j);
 
                             let newPXml = templatePXml.replace(new RegExp(`PENDAPAT_${templateChar}`, 'g'), `PENDAPAT_${char}`);
 
@@ -402,7 +398,7 @@
 
                             generatedXml += newPXml;
 
-                            // Tambahkan paragraf kosong sebagai jarak pemisah (rapat) antar poin
+                            // Tambahkan paragraf kosong untuk jeda rapi (perbaikan "rapat")
                             if (j < dataKomponen.pendapatList.length - 1) {
                                 generatedXml += emptyPXml;
                             }
@@ -410,12 +406,10 @@
                             dataKomponen[`PENDAPAT_${char}`] = dataKomponen.pendapatList[j].isi;
                         }
 
-                        // Tambahkan paragraf kosong di akhir jika diperlukan untuk jarak sebelum sesi selanjutnya
                         if (dataKomponen.pendapatList.length > 0) {
                             generatedXml += emptyPXml;
                         }
 
-                        // Timpa seluruh text PENDAPAT_A hingga ujung paragraf kosong terakhir dengan list dinamis kita
                         docXmlText = docXmlText.substring(0, paragraphs[firstIndex].start) + generatedXml + docXmlText.substring(endBoundary);
 
                         zip.file("word/document.xml", docXmlText);

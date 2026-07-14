@@ -234,26 +234,15 @@
             data['CARA'] = ambilPola(/C\.\s*Cara mendapatkan Informasi\s*:\s*(.*)/, textClean);
             data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
 
-            const abjadFull = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-            for (let char of abjadFull) {
-                data[`FAKTA_${char}`] = "";
-                data[`has_FAKTA_${char}`] = false;
-                data[`PENDAPAT_${char}`] = "";
-                data[`has_PENDAPAT_${char}`] = false;
-            }
-
             const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
             if (faktaBlock) {
                 data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
                 data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
                 data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
-
-                if (data['FAKTA_A']) data['has_FAKTA_A'] = true;
-                if (data['FAKTA_B']) data['has_FAKTA_B'] = true;
-                if (data['FAKTA_C']) data['has_FAKTA_C'] = true;
+            } else {
+                data['FAKTA_A'] = data['FAKFA_B'] = data['FAKTA_C'] = "";
             }
 
-            data['PENDAPAT_LOOP'] = [];
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             if (pendapatBlock) {
                 const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -261,67 +250,33 @@
                     const char = abjad[i];
                     const nextChar = abjad[i + 1];
                     const reg = nextChar ? new RegExp(`${char}\\.\\s*([\\s\\S]*?)(?=${nextChar}\\.\\s*|$)`) : new RegExp(`${char}\\.\\s*([\\s\\S]*)`);
-
-                    const hasil = ambilPola(reg, pendapatBlock);
-                    if (hasil) {
-                        data[`PENDAPAT_${char}`] = hasil;
-                        data[`has_PENDAPAT_${char}`] = true;
-                        data['PENDAPAT_LOOP'].push({ HURUF: char, ISI: hasil });
-                    }
+                    data[`PENDAPAT_${char}`] = ambilPola(reg, pendapatBlock);
                 }
+            } else {
+                const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
             }
             return data;
-        }
-
-        function dapatkanLokasi() {
-            return new Promise((resolve) => {
-                if (!navigator.geolocation) {
-                    resolve("Bandar Lampung");
-                    return;
-                }
-                navigator.geolocation.getCurrentPosition(async (position) => {
-                    try {
-                        const { latitude, longitude } = position.coords;
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                        const data = await res.json();
-                        let kota = data.address.city || data.address.town || data.address.regency || data.address.county || data.address.state || "Bandar Lampung";
-                        kota = kota.replace(/^(Kota|Kabupaten)\s+/i, "");
-                        resolve(kota);
-                    } catch (e) {
-                        resolve("Bandar Lampung");
-                    }
-                }, (error) => {
-                    resolve("Bandar Lampung");
-                }, { timeout: 10000 });
-            });
         }
 
         async function generateDocument() {
             const text = document.getElementById('narasiInput').value;
             if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
-            document.getElementById('loading').innerHTML = '<i class="fas fa-map-marker-alt"></i> Menyesuaikan Lokasi...';
             document.getElementById('loading').style.display = 'block';
             document.getElementById('resultBox').style.display = 'none';
 
             try {
-                const lokasiReal = await dapatkanLokasi();
-                document.getElementById('loading').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses Dokumen Word di Browser...';
-
                 const response = await fetch('./format_original.docx');
                 if (!response.ok) throw new Error("File 'format_original.docx' tidak ditemukan.");
                 const arrayBuffer = await response.arrayBuffer();
 
                 const dataKomponen = bersihkanDanUraiKresna(text);
-                dataKomponen['LOKASI'] = lokasiReal;
                 const zip = new PizZip(arrayBuffer);
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
                     paragraphLoop: true,
-                    linebreaks: true,
-                    nullGetter(part) {
-                        return "";
-                    }
+                    linebreaks: true
                 });
 
                 doc.setData(dataKomponen);

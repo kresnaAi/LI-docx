@@ -235,66 +235,38 @@
             data['NILAI'] = ambilPola(/E\.\s*Nilai Informasi\s*:\s*(.*)/, textClean);
 
             const abjadFull = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
-            const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
-
             for (let char of abjadFull) {
                 data[`FAKTA_${char}`] = "";
                 data[`has_FAKTA_${char}`] = false;
-            }
-            data['FAKTA_ALL'] = "";
-            data['FAKTA_LOOP'] = [];
-
-            if (faktaBlock) {
-                let faktaList = [];
-                let faktaArray = [];
-                const regexPoinFakta = /(?:^|\r?\n)\s*([A-Z])\.\s*([\s\S]*?)(?=(?:\r?\n\s*[A-Z]\.\s*|$))/g;
-                let matchFakta;
-
-                while ((matchFakta = regexPoinFakta.exec(faktaBlock)) !== null) {
-                    const char = matchFakta[1];
-                    const isi = matchFakta[2].trim();
-
-                    if (isi) {
-                        data[`FAKTA_${char}`] = isi;
-                        data[`has_FAKTA_${char}`] = true;
-                        faktaList.push(`${char}.\t${isi}`);
-                        faktaArray.push({ HURUF: char, ISI: isi });
-                    }
-                }
-                data['FAKTA_ALL'] = faktaList.join("\n\n");
-                data['FAKTA_LOOP'] = faktaArray;
-            }
-
-            const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
-
-            for (let char of abjadFull) {
                 data[`PENDAPAT_${char}`] = "";
                 data[`has_PENDAPAT_${char}`] = false;
             }
-            data['PENDAPAT_ALL'] = "";
-            data['PENDAPAT_LOOP'] = [];
 
+            const faktaBlock = ambilPola(/II\.\s*FAKTA-FAKTA([\s\S]*?)III\.\s*PENDAPAT/, textClean);
+            if (faktaBlock) {
+                data['FAKTA_A'] = ambilPola(/A\.\s*([\s\S]*?)(?=B\.\s*|$)/, faktaBlock);
+                data['FAKTA_B'] = ambilPola(/B\.\s*([\s\S]*?)(?=C\.\s*|$)/, faktaBlock);
+                data['FAKTA_C'] = ambilPola(/C\.\s*([\s\S]*)/, faktaBlock);
+
+                if (data['FAKTA_A']) data['has_FAKTA_A'] = true;
+                if (data['FAKTA_B']) data['has_FAKTA_B'] = true;
+                if (data['FAKTA_C']) data['has_FAKTA_C'] = true;
+            }
+
+            const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             if (pendapatBlock) {
-                let pendapatList = [];
-                let pendapatArray = [];
-                const regexPoin = /(?:^|\r?\n)\s*([A-Z])\.\s*([\s\S]*?)(?=(?:\r?\n\s*[A-Z]\.\s*|$))/g;
-                let matchPoin;
+                const abjad = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                for (let i = 0; i < abjad.length; i++) {
+                    const char = abjad[i];
+                    const nextChar = abjad[i + 1];
+                    const reg = nextChar ? new RegExp(`${char}\\.\\s*([\\s\\S]*?)(?=${nextChar}\\.\\s*|$)`) : new RegExp(`${char}\\.\\s*([\\s\\S]*)`);
 
-                while ((matchPoin = regexPoin.exec(pendapatBlock)) !== null) {
-                    const char = matchPoin[1];
-                    const isi = matchPoin[2].trim();
-
-                    // Hanya tambahkan jika isinya tidak kosong
-                    if (isi) {
-                        data[`PENDAPAT_${char}`] = isi;
+                    const hasil = ambilPola(reg, pendapatBlock);
+                    if (hasil) {
+                        data[`PENDAPAT_${char}`] = hasil;
                         data[`has_PENDAPAT_${char}`] = true;
-                        pendapatList.push(`${char}.\t${isi}`);
-                        pendapatArray.push({ HURUF: char, ISI: isi });
                     }
                 }
-                data['PENDAPAT_ALL'] = pendapatList.join("\n\n");
-                data['PENDAPAT_LOOP'] = pendapatArray;
             }
             return data;
         }

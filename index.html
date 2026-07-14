@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="id">
-<html>
-
 <head>
     <meta charset="UTF-8">
     <title>Generator LI Kresna</title>
     <script src="https://unpkg.com/pizzip@3.1.7/dist/pizzip.js"></script>
     <script src="https://unpkg.com/docxtemplater@3.49.1/build/docxtemplater.js"></script>
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
         :root {
@@ -18,32 +17,13 @@
             --text-light: #e2e8f0;
         }
 
-        body {
-            font-family: sans-serif;
-            background: #0a0f1d;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-
-        textarea {
-            width: 100%;
-            max-width: 500px;
-            height: 200px;
-        }
-
-        button {
-            padding: 15px 30px;
-            margin-top: 20px;
-            cursor: pointer;
-            background: #00f2fe;
-            border: none;
-            font-weight: bold;
+        * {
+            box-sizing: border-box;
         }
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-light);
@@ -82,7 +62,6 @@
             border-radius: 8px;
             color: #fff;
             padding: 15px;
-            box-sizing: border-box;
             font-size: 14px;
             resize: vertical;
         }
@@ -112,6 +91,12 @@
         .btn-neon:hover {
             box-shadow: 0 0 20px var(--neon-blue);
             transform: translateY(-2px);
+        }
+
+        .btn-neon:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .loading {
@@ -144,6 +129,8 @@
             transition: 0.2s;
             text-transform: uppercase;
             font-size: 14px;
+            cursor: pointer;
+            border: none;
         }
 
         .btn-download:hover {
@@ -151,14 +138,11 @@
         }
     </style>
 </head>
-
 <body>
-
     <div class="container">
         <h2><i class="fas fa-terminal"></i> LI Generator</h2>
         <div style="text-align: center; margin-top: -5px; margin-bottom: 25px;">
-            <div
-                style="display: inline-block; width: 30px; height: 20px; border: 1px solid #cbd5e1; box-sizing: border-box; vertical-align: middle;">
+            <div style="display: inline-block; width: 30px; height: 20px; border: 1px solid #cbd5e1; box-sizing: border-box; vertical-align: middle;">
                 <div style="background-color: #ff0000; height: 50%;"></div>
                 <div style="background-color: #ffffff; height: 50%;"></div>
             </div>
@@ -167,10 +151,8 @@
             </p>
         </div>
 
-        <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Khusus Tempel hasil Buat LI dari KRESNA AI di
-            bawah ini:</p>
-        <p style="color: #ff0000; font-size: 10px; margin-bottom: 8px; font-weight: bold;">[Hapus dulu tanda seperti ini
-            = [6/23/2026 1:34 AM] KRESNA AI]</p>
+        <p style="color: #a0aec0; font-size: 14px; margin-bottom: 10px;">Khusus Tempel hasil Buat LI dari KRESNA AI di bawah ini:</p>
+        <p style="color: #ff0000; font-size: 10px; margin-bottom: 8px; font-weight: bold;">[Hapus dulu tanda seperti ini = [6/23/2026 1:34 AM] KRESNA AI]</p>
         <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
 
         <button class="btn-neon" onclick="generateDocument()">
@@ -184,8 +166,7 @@
         <div class="result-box" id="resultBox">
             <i class="fas fa-check-circle fa-3x" style="color: #00e676; margin-bottom:10px;"></i>
             <h3>GENERATE BERHASIL!</h3>
-            <p style="color: #a0aec0; font-size: 13px; margin-top:-10px; margin-bottom: 20px;">Dokumen Laporan Informasi
-                siap diunduh.</p>
+            <p style="color: #a0aec0; font-size: 13px; margin-top:-10px; margin-bottom: 20px;">Dokumen Laporan Informasi siap diunduh.</p>
             <a id="linkDownloadDocx" href="#" class="btn-download">
                 <i class="fas fa-file-word"></i> DOWNLOAD DOCX
             </a>
@@ -254,18 +235,17 @@
                 data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
             }
 
-            // Parse PENDAPAT PELAPOR - DIPERBAIKI: Tidak ada lagi pemotongan duplikasi
+            // Parse PENDAPAT PELAPOR
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             const pendapatList = [];
             
             if (pendapatBlock) {
-                // Bersihkan pendapatBlock dari teks setelah poin terakhir (seperti tanda tangan, dll)
+                // Bersihkan teks setelah poin terakhir (seperti tanda tangan)
                 let cleanPendapatBlock = pendapatBlock;
                 const cutOffPatterns = [
                     /\n\s*(?:Demikian|Dibuat|Dikeluarkan|Mengetahui|An\.|a\.n\.|TTD|Tembusan)[\s\S]*$/i,
-                    /\n\s*[A-H][a-z]+,\s*\d+\s*[A-H][a-z]+\s*\d+[\s\S]*$/  // pola tanggal di akhir
+                    /\n\s*[A-Z][a-z]+,\s*\d+\s*[A-Z][a-z]+\s*\d+[\s\S]*$/
                 ];
-                
                 for (const pattern of cutOffPatterns) {
                     const matchCut = cleanPendapatBlock.match(pattern);
                     if (matchCut) {
@@ -273,48 +253,37 @@
                     }
                 }
                 
-                const abjadList = "ABCDEFGH";
+                const abjadList = "ABCDEFGH"; // maksimal H, sesuaikan template
                 let i = 0;
-                
                 while (i < abjadList.length) {
                     const char = abjadList[i];
                     const nextChar = abjadList[i + 1];
-                    
                     let reg;
                     if (nextChar) {
-                        // Cari dari char saat ini sampai sebelum char berikutnya
                         reg = new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`, 'i');
                     } else {
-                        // Char terakhir, ambil sampai akhir
                         reg = new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`, 'i');
                     }
-
                     const val = ambilPola(reg, cleanPendapatBlock);
-                    
                     if (val && val.trim()) {
-                        const trimmedVal = val.trim();
-                        pendapatList.push({ 
-                            char: char, 
-                            isi: trimmedVal 
-                        });
+                        pendapatList.push({ char: char, isi: val.trim() });
                         i++;
                     } else {
-                        // Jika tidak ditemukan, hentikan loop
                         break;
                     }
                 }
             }
 
-            data['pendapatList'] = pendapatList;
-
-            // Backward compatibility untuk PENDAPAT_A s/d PENDAPAT_H
-            const abjadLegacy = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-            for (let idx = 0; idx < abjadLegacy.length; idx++) {
-                const char = abjadLegacy[idx];
-                const item = pendapatList[idx];
+            // Isi placeholder PENDAPAT_A sampai PENDAPAT_H
+            const maxPoin = 8; // asumsi template memiliki A sampai H
+            for (let i = 0; i < maxPoin; i++) {
+                const char = String.fromCharCode(65 + i); // A, B, C, ...
+                const item = pendapatList[i];
                 data[`PENDAPAT_${char}`] = item ? item.isi : "";
             }
-            
+
+            // Simpan list untuk keperluan lain (debug)
+            data['pendapatList'] = pendapatList;
             return data;
         }
 
@@ -330,10 +299,10 @@
             let lokasiName = "Lokasi Tidak Diketahui";
 
             try {
-                // Meminta izin lokasi
+                // Izin lokasi
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) {
-                        reject(new Error("Geolokasi tidak didukung oleh browser Anda."));
+                        reject(new Error("Geolokasi tidak didukung."));
                     } else {
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
                             enableHighAccuracy: true,
@@ -349,7 +318,6 @@
 
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
-                
                 try {
                     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
                     const geoData = await geoRes.json();
@@ -360,7 +328,6 @@
                 } catch (e) {
                     console.error("Gagal mendapatkan nama lokasi:", e);
                 }
-
             } catch (err) {
                 alert("Izin lokasi wajib diberikan untuk melakukan generate dokumen.");
                 generateBtn.disabled = false;
@@ -377,104 +344,18 @@
                 dataKomponen['LOKASI'] = lokasiName;
 
                 console.log("Data yang diparse:", dataKomponen);
-                console.log("Jumlah pendapat:", dataKomponen.pendapatList.length);
 
                 const zip = new PizZip(arrayBuffer);
 
-                // Modifikasi XML untuk menyesuaikan jumlah poin pendapat
-                try {
-                    let docXmlText = zip.file("word/document.xml").asText();
-
-                    const paragraphs = [];
-                    const pRegex = /<w:p(?:\s[^>]*?)?>[\s\S]*?<\/w:p>/g;
-                    let match;
-                    while ((match = pRegex.exec(docXmlText)) !== null) {
-                        paragraphs.push({
-                            xml: match[0],
-                            start: match.index,
-                            end: match.index + match[0].length
-                        });
-                    }
-
-                    // Cari paragraf yang mengandung placeholder PENDAPAT_
-                    let firstIndex = -1;
-                    let lastIndex = -1;
-                    let templatePXml = "";
-
-                    for (let i = 0; i < paragraphs.length; i++) {
-                        if (paragraphs[i].xml.match(/PENDAPAT_[A-H]/)) {
-                            if (firstIndex === -1) {
-                                firstIndex = i;
-                                templatePXml = paragraphs[i].xml;
-                            }
-                            lastIndex = i;
-                        }
-                    }
-
-                    if (firstIndex !== -1 && lastIndex !== -1 && dataKomponen.pendapatList.length > 0) {
-                        // Cari batas akhir blok pendapat (termasuk paragraf kosong setelahnya)
-                        let endBoundary = paragraphs[lastIndex].end;
-                        
-                        for (let k = lastIndex + 1; k < paragraphs.length; k++) {
-                            let pXml = paragraphs[k].xml;
-                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-H]/g, '').trim();
-                            if (textContent.length === 0) {
-                                endBoundary = paragraphs[k].end;
-                            } else {
-                                break;
-                            }
-                        }
-
-                        // Generate XML untuk semua poin pendapat
-                        let generatedXml = "";
-                        const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
-
-                        for (let j = 0; j < dataKomponen.pendapatList.length; j++) {
-                            const item = dataKomponen.pendapatList[j];
-                            
-                            // Clone template dan ganti placeholder
-                            let newPXml = templatePXml.replace(/PENDAPAT_[A-H]/g, `PENDAPAT_${item.char}`);
-                            
-                            // Ganti juga karakter hardcoded di template
-                            const templateCharMatch = templatePXml.match(/PENDAPAT_([A-H])/);
-                            if (templateCharMatch) {
-                                const templateChar = templateCharMatch[1];
-                                // Ganti karakter di teks (misalnya "A." menjadi "B.", dll)
-                                const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\s\\u00A0]*)${templateChar}(\\.)`, 'g');
-                                newPXml = newPXml.replace(hardcodedRegex, `$1${item.char}$2`);
-                            }
-                            
-                            generatedXml += newPXml;
-                            
-                            // Tambahkan jeda antar poin
-                            if (j < dataKomponen.pendapatList.length - 1) {
-                                generatedXml += emptyPXml;
-                            }
-
-                            // Set data untuk docxtemplater
-                            dataKomponen[`PENDAPAT_${item.char}`] = item.isi;
-                        }
-
-                        // Tambahkan paragraf kosong di akhir blok
-                        generatedXml += emptyPXml;
-
-                        // Ganti blok lama dengan yang baru
-                        docXmlText = docXmlText.substring(0, paragraphs[firstIndex].start) + 
-                                     generatedXml + 
-                                     docXmlText.substring(endBoundary);
-
-                        zip.file("word/document.xml", docXmlText);
-                    }
-                } catch (xmlError) {
-                    console.error("Gagal memodifikasi XML:", xmlError);
-                }
-
+                // Tidak ada modifikasi XML – biarkan struktur template apa adanya
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
                     paragraphLoop: true,
                     linebreaks: true
                 });
 
+                // Pastikan semua placeholder yang mungkin ada di template sudah terdefinisi
+                // (PENDAPAT_A..H sudah di-set di fungsi parsing)
                 doc.setData(dataKomponen);
                 doc.render();
 
@@ -493,10 +374,7 @@
                 newDownloadBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     window.saveAs(out, "Laporan_Informasi_Kresna.docx");
-                    
-                    setTimeout(function () {
-                        location.reload();
-                    }, 1000);
+                    setTimeout(() => location.reload(), 1000);
                 });
 
             } catch (error) {

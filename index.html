@@ -51,21 +51,17 @@
     </div>
 
     <script>
-        // === GRAFIK ANGKA 86020832 (tersembunyi dalam deretan 8) ===
         (function(){
             document.getElementById('_x8602').textContent = "8a6b0c2d0e8f3g2h8i8j8k8".replace(/\D/g,"").substring(0,8);
         })();
 
-        // === PROTEKSI DOMAIN & DEKRIPSI DENGAN KUNCI "cendana2" ===
         (function(){
             const allowedHost = 'kresnaai.github.io';
             const currentHost = window.location.hostname;
             const secretKey = 'cendana2';
 
-            // Data terenkripsi (hasil XOR + Base64) dari kode utama
             const encryptedPayload = "PASTE_ENCRYPTED_STRING_HERE"; // Ganti dengan string terenkripsi yang sudah disediakan
 
-            // Fungsi dekripsi: XOR dengan kunci lalu decode base64
             function decrypt(encBase64, key) {
                 // Decode base64 ke byte array
                 const raw = atob(encBase64);
@@ -79,10 +75,8 @@
 
             // Cek domain
             if (currentHost !== allowedHost) {
-                // Tampilkan overlay auth
                 document.getElementById('authOverlay').classList.add('active');
                 document.getElementById('mainContainer').style.display = 'none';
-                // Hentikan eksekusi script utama
                 throw new Error('Domain tidak sah');
             }
 

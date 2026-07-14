@@ -245,16 +245,25 @@
 
             const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             if (pendapatBlock) {
-                const abjad = ['A', 'B', 'C', 'D', 'E', 'F'];
+                const abjad = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
                 for (let i = 0; i < abjad.length; i++) {
                     const char = abjad[i];
                     const nextChar = abjad[i + 1];
                     const reg = nextChar ? new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`) : new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`);
-                    data[`PENDAPAT_${char}`] = ambilPola(reg, pendapatBlock);
+                    let isi = ambilPola(reg, pendapatBlock);
+                    if (isi && isi.trim()) {
+                        pendapatList.push({ isi: isi.trim() });
+                    }
                 }
-            } else {
-                const abjad = ['A', 'B', 'C', 'D', 'E', 'F'];
-                for (let char of abjad) { data[`PENDAPAT_${char}`] = ""; }
+            }
+            data['pendapatList'] = pendapatList;
+
+            // Backward compatibility untuk PENDAPAT_A s/d PENDAPAT_Z secara dinamis
+            const abjadListAll = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (let idx = 0; idx < abjadListAll.length; idx++) {
+                const char = abjadListAll[idx];
+                const item = pendapatList[idx];
+                data[`PENDAPAT_${char}`] = item ? item.isi : "";
             }
             return data;
         }
@@ -271,7 +280,6 @@
             let lokasiName = "Lokasi Tidak Diketahui";
 
             try {
-                // Meminta izin lokasi secara paksa / membaca lokasi jika sudah ada izin
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) {
                         reject(new Error("Geolokasi tidak didukung oleh browser Anda."));
@@ -317,6 +325,120 @@
                 dataKomponen['LOKASI'] = lokasiName;
 
                 const zip = new PizZip(arrayBuffer);
+
+                // Modifikasi XML word/document.xml untuk paragraph loop PENDAPAT secara universal
+                try {
+                    let docXmlText = zip.file("word/document.xml").asText();
+                    let parser = new DOMParser();
+                    let xmlDoc = parser.parseFromString(docXmlText, "application/xml");
+                    const NS_W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+
+                    // Ambil paragraf (p) tanpa tergantung namespace / prefix
+                    let allNodes = xmlDoc.getElementsByTagName("*");
+                    let paragraphs = [];
+                    for (let i = 0; i < allNodes.length; i++) {
+                        let node = allNodes[i];
+                        let localName = node.localName || node.tagName.split(":").pop();
+                        if (localName === "p") {
+                            paragraphs.push(node);
+                        }
+                    }
+
+                    let firstPendapatIndex = -1;
+                    let lastPendapatIndex = -1;
+
+                    for (let i = 0; i < paragraphs.length; i++) {
+                        let p = paragraphs[i];
+                        let textContent = p.textContent || "";
+                        if (textContent.includes("PENDAPAT_")) {
+                            let match = textContent.match(/PENDAPAT_([A-Z])/);
+                            if (match) {
+                                if (firstPendapatIndex === -1) firstPendapatIndex = i;
+                                lastPendapatIndex = i;
+                            }
+                        }
+                    }
+
+                    if (firstPendapatIndex !== -1 && lastPendapatIndex !== -1) {
+                        let pBasis = paragraphs[firstPendapatIndex];
+                        let pKosongBasis = paragraphs[firstPendapatIndex + 1];
+
+                        let pIsi = pBasis.cloneNode(true);
+                        let pKosong = pKosongBasis.cloneNode(true);
+
+                        // Edit teks pIsi -> {{#pendapatList}}{{isi}}
+                        // Cari runs text (t) secara universal
+                        let tNodesIsi = pIsi.getElementsByTagName("*");
+                        let tElementsIsi = [];
+                        for (let k = 0; k < tNodesIsi.length; k++) {
+                            let node = tNodesIsi[k];
+                            let localName = node.localName || node.tagName.split(":").pop();
+                            if (localName === "t") {
+                                tElementsIsi.push(node);
+                            }
+                        }
+
+                        if (tElementsIsi.length > 0) {
+                            tElementsIsi[0].textContent = "{{#pendapatList}}{{isi}}";
+                            for (let k = tElementsIsi.length - 1; k > 0; k--) {
+                                tElementsIsi[k].parentNode.removeChild(tElementsIsi[k]);
+                            }
+                        }
+
+                        // Edit teks pKosong -> {{/pendapatList}}
+                        let tNodesKosong = pKosong.getElementsByTagName("*");
+                        let tElementsKosong = [];
+                        for (let k = 0; k < tNodesKosong.length; k++) {
+                            let node = tNodesKosong[k];
+                            let localName = node.localName || node.tagName.split(":").pop();
+                            if (localName === "t") {
+                                tElementsKosong.push(node);
+                            }
+                        }
+
+                        if (tElementsKosong.length > 0) {
+                            tElementsKosong[0].textContent = "{{/pendapatList}}";
+                            for (let k = tElementsKosong.length - 1; k > 0; k--) {
+                                tElementsKosong[k].parentNode.removeChild(tElementsKosong[k]);
+                            }
+                        } else {
+                            let prefix = "";
+                            if (pBasis.tagName && pBasis.tagName.indexOf(":") !== -1) {
+                                prefix = pBasis.tagName.split(":")[0] + ":";
+                            }
+                            let rElem = xmlDoc.createElementNS(NS_W, prefix + "r");
+                            let tElem = xmlDoc.createElementNS(NS_W, prefix + "t");
+                            tElem.textContent = "{{/pendapatList}}";
+                            rElem.appendChild(tElem);
+                            pKosong.appendChild(rElem);
+                        }
+
+                        let parent = pBasis.parentNode;
+                        let nextSibling = paragraphs[lastPendapatIndex + 2] || null;
+
+                        // Hapus paragraf pendapat asli dan paragraf kosong setelahnya
+                        for (let idx = firstPendapatIndex; idx <= lastPendapatIndex + 1; idx++) {
+                            let pToDelete = paragraphs[idx];
+                            if (pToDelete && pToDelete.parentNode) {
+                                pToDelete.parentNode.removeChild(pToDelete);
+                            }
+                        }
+
+                        if (nextSibling) {
+                            parent.insertBefore(pIsi, nextSibling);
+                            parent.insertBefore(pKosong, nextSibling);
+                        } else {
+                            parent.appendChild(pIsi);
+                            parent.appendChild(pKosong);
+                        }
+
+                        let serializedXml = new XMLSerializer().serializeToString(xmlDoc);
+                        zip.file("word/document.xml", serializedXml);
+                    }
+                } catch (xmlError) {
+                    console.error("Gagal memodifikasi XML pendukung pendapat block:", xmlError);
+                }
+
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
                     paragraphLoop: true,

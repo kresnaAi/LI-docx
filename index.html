@@ -340,54 +340,77 @@
                 try {
                     let docXmlText = zip.file("word/document.xml").asText();
 
-                    const existingPlaceholders = [];
+                    const paragraphs = [];
                     const pRegex = /<w:p(?:\s[^>]*?)?>[\s\S]*?<\/w:p>/g;
                     let match;
                     while ((match = pRegex.exec(docXmlText)) !== null) {
-                        const varMatch = match[0].match(/PENDAPAT_([A-Z])/);
-                        if (varMatch) {
-                            existingPlaceholders.push({
-                                xml: match[0],
-                                char: varMatch[1]
-                            });
+                        paragraphs.push({
+                            xml: match[0],
+                            start: match.index,
+                            end: match.index + match[0].length
+                        });
+                    }
+
+                    let firstIndex = -1;
+                    let lastIndex = -1;
+                    let templatePXml = "";
+
+                    for (let i = 0; i < paragraphs.length; i++) {
+                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
+                            if (firstIndex === -1) {
+                                firstIndex = i;
+                                templatePXml = paragraphs[i].xml;
+                            }
+                            lastIndex = i;
                         }
                     }
 
-                    if (existingPlaceholders.length > 0) {
-                        const usedChars = dataKomponen.pendapatList.map(p => p.char);
-                        const lastTemplateChar = existingPlaceholders[existingPlaceholders.length - 1].char;
-                        const lastTemplateXml = existingPlaceholders[existingPlaceholders.length - 1].xml;
+                    if (firstIndex !== -1 && lastIndex !== -1) {
+                        let endBoundary = paragraphs[lastIndex].end;
 
-                        docXmlText = docXmlText.replace(/<w:p(?:\s[^>]*?)?>[\s\S]*?<\/w:p>/g, function (pXml) {
-                            const varMatch = pXml.match(/PENDAPAT_([A-Z])/);
-                            if (varMatch) {
-                                const char = varMatch[1];
-
-                                if (!usedChars.includes(char)) {
-                                    return "";
-                                }
-
-                                if (char === lastTemplateChar) {
-                                    let combinedXml = pXml;
-
-                                    const lastIndexInList = dataKomponen.pendapatList.findIndex(p => p.char === lastTemplateChar);
-                                    if (lastIndexInList !== -1 && lastIndexInList < dataKomponen.pendapatList.length - 1) {
-                                        for (let j = lastIndexInList + 1; j < dataKomponen.pendapatList.length; j++) {
-                                            const extraChar = dataKomponen.pendapatList[j].char;
-
-                                            let newPXml = lastTemplateXml.replace(new RegExp(`PENDAPAT_${lastTemplateChar}`, 'g'), `PENDAPAT_${extraChar}`);
-
-                                            const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${lastTemplateChar}(\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
-                                            newPXml = newPXml.replace(hardcodedRegex, `$1${extraChar}$2`);
-
-                                            combinedXml += newPXml;
-                                        }
-                                    }
-                                    return combinedXml;
-                                }
+                        // Menghitung dan menghapus list / paragraf kosong setelah placeholder terakhir
+                        for (let k = lastIndex + 1; k < paragraphs.length; k++) {
+                            let pXml = paragraphs[k].xml;
+                            let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
+                            // Jika ada teks selain PENDAPAT_, berarti sudah masuk seksi berikutnya (contoh: IV. PENUTUP)
+                            if (textContent.length === 0) {
+                                endBoundary = paragraphs[k].end;
+                            } else {
+                                break;
                             }
-                            return pXml;
-                        });
+                        }
+
+                        const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
+                        const templateChar = templateCharMatch ? templateCharMatch[1] : 'A';
+
+                        let generatedXml = "";
+                        const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
+
+                        for (let j = 0; j < dataKomponen.pendapatList.length; j++) {
+                            const char = dataKomponen.pendapatList[j].char;
+
+                            let newPXml = templatePXml.replace(new RegExp(`PENDAPAT_${templateChar}`, 'g'), `PENDAPAT_${char}`);
+
+                            const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\\\s\\\\u00A0]*)${templateChar}(\\\\.[\\\\s\\\\u00A0]*<\\\\/w:t>)`);
+                            newPXml = newPXml.replace(hardcodedRegex, `$1${char}$2`);
+
+                            generatedXml += newPXml;
+
+                            // Tambahkan paragraf kosong sebagai jarak pemisah (rapat) antar poin
+                            if (j < dataKomponen.pendapatList.length - 1) {
+                                generatedXml += emptyPXml;
+                            }
+
+                            dataKomponen[`PENDAPAT_${char}`] = dataKomponen.pendapatList[j].isi;
+                        }
+
+                        // Tambahkan paragraf kosong di akhir jika diperlukan untuk jarak sebelum sesi selanjutnya
+                        if (dataKomponen.pendapatList.length > 0) {
+                            generatedXml += emptyPXml;
+                        }
+
+                        // Timpa seluruh text PENDAPAT_A hingga ujung paragraf kosong terakhir dengan list dinamis kita
+                        docXmlText = docXmlText.substring(0, paragraphs[firstIndex].start) + generatedXml + docXmlText.substring(endBoundary);
 
                         zip.file("word/document.xml", docXmlText);
                     }

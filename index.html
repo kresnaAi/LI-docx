@@ -259,6 +259,11 @@
             const text = document.getElementById('narasiInput').value;
             if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
+            const generateBtn = document.querySelector('.btn-neon');
+            const originalBtnHtml = generateBtn.innerHTML;
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa Izin Lokasi...';
+
             let lokasiName = "Lokasi Tidak Diketahui";
 
             try {
@@ -277,6 +282,7 @@
 
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('resultBox').style.display = 'none';
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sedang Memproses...';
 
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
@@ -293,6 +299,8 @@
 
             } catch (err) {
                 alert("Izin lokasi wajib diberikan untuk melakukan generate dokumen.");
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalBtnHtml;
                 return;
             }
 

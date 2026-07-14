@@ -173,7 +173,24 @@
             = [6/23/2026 1:34 AM] KRESNA AI]</p>
         <textarea id="narasiInput" placeholder="Tempel teks laporan di sini..."></textarea>
 
-        <button class="btn-neon" onclick="generateDocument()">
+        <div
+            style="background: #1e293b; padding: 12px; border-radius: 8px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-map-marker-alt" style="color: #00f2fe; font-size: 18px;"></i>
+                <div style="text-align: left;">
+                    <div style="font-size: 13px; font-weight: bold; color: #e2e8f0;">Izin Lokasi (Wajib)</div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-top:2px;">Klik ON untuk persetujuan lokasi.
+                    </div>
+                </div>
+            </div>
+            <button id="btnLocation"
+                style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; transition: 0.3s;"
+                onclick="requestLocation()">
+                OFF
+            </button>
+        </div>
+
+        <button class="btn-neon" id="btnGenerate" onclick="generateDocument()">
             <i class="fas fa-file-invoice"></i> GENERATE
         </button>
 
@@ -255,22 +272,29 @@
             return data;
         }
 
-        async function generateDocument() {
-            const text = document.getElementById('narasiInput').value;
-            if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
+        let isLocationGranted = false;
+        let globalLokasiName = "Lokasi Tidak Diketahui";
 
-            const generateBtn = document.querySelector('.btn-neon');
-            const originalBtnHtml = generateBtn.innerHTML;
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa Izin Lokasi...';
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                const permission = await navigator.permissions.query({ name: 'geolocation' });
+                if (permission.state === 'granted') {
+                    requestLocation(true);
+                }
+            } catch (e) { }
+        });
 
-            let lokasiName = "Lokasi Tidak Diketahui";
+        async function requestLocation(silent = false) {
+            const btn = document.getElementById('btnLocation');
+            if (isLocationGranted) return;
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.style.background = '#f59e0b';
 
             try {
-                // Meminta izin lokasi secara paksa / membaca lokasi jika sudah ada izin
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) {
-                        reject(new Error("Geolokasi tidak didukung oleh browser Anda."));
+                        reject(new Error("Geolokasi tidak didukung."));
                     } else {
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
                             enableHighAccuracy: true,
@@ -280,29 +304,47 @@
                     }
                 });
 
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('resultBox').style.display = 'none';
-                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sedang Memproses...';
-
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
                 try {
                     const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
                     const geoData = await geoRes.json();
                     if (geoData && geoData.address) {
-                        lokasiName = geoData.address.city || geoData.address.regency || geoData.address.county || geoData.address.town || geoData.address.state_district || "Lokasi Tidak Diketahui";
-                        lokasiName = lokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
+                        globalLokasiName = geoData.address.city || geoData.address.regency || geoData.address.county || geoData.address.town || geoData.address.state_district || "Lokasi Tidak Diketahui";
+                        globalLokasiName = globalLokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
                     }
                 } catch (e) {
                     console.error("Gagal mendapatkan nama lokasi:", e);
                 }
 
+                isLocationGranted = true;
+                btn.style.background = '#10b981';
+                btn.innerHTML = 'ON';
+                btn.disabled = true;
+
             } catch (err) {
-                alert("Izin lokasi wajib diberikan untuk melakukan generate dokumen.");
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = originalBtnHtml;
+                if (!silent) alert("Izin lokasi wajib diberikan. Pastikan GPS Anda aktif dan beri izin pada popup browser.");
+                btn.style.background = '#ef4444';
+                btn.innerHTML = 'OFF';
+            }
+        }
+
+        async function generateDocument() {
+            const text = document.getElementById('narasiInput').value;
+            if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
+
+            if (!isLocationGranted) {
+                alert("SILAKAN KLIK TOMBOL 'OFF' PADA IZIN LOKASI MENJADI 'ON' TERLEBIH DAHULU.");
                 return;
             }
+
+            const generateBtn = document.getElementById('btnGenerate');
+            const originalBtnHtml = generateBtn.innerHTML;
+            generateBtn.disabled = true;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sedang Memproses...';
 
             try {
                 const response = await fetch('./format_original.docx');

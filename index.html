@@ -237,29 +237,38 @@
                 data['FAKTA_A'] = data['FAKTA_B'] = data['FAKTA_C'] = "";
             }
 
-            // Parse PENDAPAT PELAPOR - DIPERBAIKI: Tidak ada lagi pemotongan duplikasi
-            const pendapatBlock = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
+            // ========== PENDAPAT PELAPOR – PERBAIKAN UTAMA ==========
+            const pendapatBlockRaw = ambilPola(/III\.\s*PENDAPAT PELAPOR([\s\S]*)/, textClean);
             const pendapatList = [];
             
-            if (pendapatBlock) {
-                // Bersihkan pendapatBlock dari teks setelah poin terakhir (seperti tanda tangan, dll)
-                let cleanPendapatBlock = pendapatBlock;
-                const cutOffPatterns = [
-                    /\n\s*(?:Demikian|Dibuat|Dikeluarkan|Mengetahui|An\.|a\.n\.|TTD|Tembusan)[\s\S]*$/i,
-                    /\n\s*[A-Z][a-z]+,\s*\d+\s*[A-Z][a-z]+\s*\d+[\s\S]*$/  // pola tanggal di akhir
+            if (pendapatBlockRaw) {
+                // 1. Tentukan batas akhir blok dengan mencari pola penutup yang UMUM
+                let cleanPendapatBlock = pendapatBlockRaw;
+                // Pola-pola yang biasanya muncul SETELAH poin terakhir
+                const endPatterns = [
+                    /\nIV\.\s/,               // Romawi IV
+                    /\nDemikian\s/,          // Demikian laporan ini
+                    /\nDibuat\s/,            // Dibuat di
+                    /\nDikeluarkan\s/,       // Dikeluarkan di
+                    /\nMengetahui\s/,        // Mengetahui
+                    /\nAn\.\s/,              // An.
+                    /\na\.n\.\s/,            // a.n.
+                    /\nTTD\s/,               // TTD
+                    /\nTembusan\s/           // Tembusan
                 ];
                 
-                for (const pattern of cutOffPatterns) {
-                    const matchCut = cleanPendapatBlock.match(pattern);
-                    if (matchCut) {
-                        cleanPendapatBlock = cleanPendapatBlock.substring(0, matchCut.index);
+                let cutIndex = cleanPendapatBlock.length;
+                for (const pat of endPatterns) {
+                    const m = cleanPendapatBlock.match(pat);
+                    if (m && m.index < cutIndex) {
+                        cutIndex = m.index;
                     }
                 }
-                
+                cleanPendapatBlock = cleanPendapatBlock.substring(0, cutIndex);
+
+                // 2. Parse semua poin A, B, C, ... hingga habis
                 const abjadList = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-                let i = 0;
-                
-                while (i < abjadList.length) {
+                for (let i = 0; i < abjadList.length; i++) {
                     const char = abjadList[i];
                     const nextChar = abjadList[i + 1];
                     
@@ -268,21 +277,19 @@
                         // Cari dari char saat ini sampai sebelum char berikutnya
                         reg = new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*?)(?=(?:[\\n\\r]\\s*${nextChar}\\.\\s*)|$)`, 'i');
                     } else {
-                        // Char terakhir, ambil sampai akhir
+                        // Karakter terakhir, ambil sampai akhir
                         reg = new RegExp(`(?:^|[\\n\\r])\\s*${char}\\.\\s*([\\s\\S]*)`, 'i');
                     }
 
                     const val = ambilPola(reg, cleanPendapatBlock);
                     
                     if (val && val.trim()) {
-                        const trimmedVal = val.trim();
                         pendapatList.push({ 
                             char: char, 
-                            isi: trimmedVal 
+                            isi: val.trim() 
                         });
-                        i++;
                     } else {
-                        // Jika tidak ditemukan, hentikan loop
+                        // Tidak ditemukan -> hentikan (asumsi poin berurutan)
                         break;
                     }
                 }
@@ -364,7 +371,7 @@
 
                 const zip = new PizZip(arrayBuffer);
 
-                // Modifikasi XML untuk menyesuaikan jumlah poin pendapat
+                // ========== Modifikasi XML DOCX untuk menyesuaikan jumlah poin ==========
                 try {
                     let docXmlText = zip.file("word/document.xml").asText();
 
@@ -395,9 +402,8 @@
                     }
 
                     if (firstIndex !== -1 && lastIndex !== -1 && dataKomponen.pendapatList.length > 0) {
-                        // Cari batas akhir blok pendapat (termasuk paragraf kosong setelahnya)
+                        // Cari batas akhir blok (termasuk paragraf kosong setelahnya)
                         let endBoundary = paragraphs[lastIndex].end;
-                        
                         for (let k = lastIndex + 1; k < paragraphs.length; k++) {
                             let pXml = paragraphs[k].xml;
                             let textContent = pXml.replace(/<[^>]+>/g, '').replace(/PENDAPAT_[A-Z]/g, '').trim();
@@ -408,37 +414,31 @@
                             }
                         }
 
-                        // Generate XML untuk semua poin pendapat
+                        // Generate XML untuk SEMUA poin pendapat yang ada
                         let generatedXml = "";
                         const emptyPXml = '<w:p><w:pPr><w:spacing w:after="0"/></w:pPr></w:p>';
 
                         for (let j = 0; j < dataKomponen.pendapatList.length; j++) {
                             const item = dataKomponen.pendapatList[j];
                             
-                            // Clone template dan ganti placeholder
+                            // Ganti placeholder di template dengan placeholder spesifik poin
                             let newPXml = templatePXml.replace(/PENDAPAT_[A-Z]/g, `PENDAPAT_${item.char}`);
                             
-                            // Ganti juga karakter hardcoded di template
+                            // Ubah hardcoded karakter (misal "A." -> "B.") dalam teks
                             const templateCharMatch = templatePXml.match(/PENDAPAT_([A-Z])/);
                             if (templateCharMatch) {
                                 const templateChar = templateCharMatch[1];
-                                // Ganti karakter di teks (misalnya "A." menjadi "B.", dll)
                                 const hardcodedRegex = new RegExp(`(<w:t[^>]*>[\\s\\u00A0]*)${templateChar}(\\.)`, 'g');
                                 newPXml = newPXml.replace(hardcodedRegex, `$1${item.char}$2`);
                             }
                             
                             generatedXml += newPXml;
-                            
-                            // Tambahkan jeda antar poin
                             if (j < dataKomponen.pendapatList.length - 1) {
-                                generatedXml += emptyPXml;
+                                generatedXml += emptyPXml; // spasi antar poin
                             }
-
-                            // Set data untuk docxtemplater
-                            dataKomponen[`PENDAPAT_${item.char}`] = item.isi;
                         }
 
-                        // Tambahkan paragraf kosong di akhir blok
+                        // Tambahkan satu paragraf kosong di akhir sebagai spacing
                         generatedXml += emptyPXml;
 
                         // Ganti blok lama dengan yang baru
@@ -476,7 +476,6 @@
                 newDownloadBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     window.saveAs(out, "Laporan_Informasi_Kresna.docx");
-                    
                     setTimeout(function () {
                         location.reload();
                     }, 1000);

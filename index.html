@@ -360,8 +360,7 @@
                     let templatePXml = "";
 
                     for (let i = 0; i < paragraphs.length; i++) {
-                        let textContent = paragraphs[i].xml.replace(/<[^>]+>/g, '');
-                        if (textContent.match(/PENDAPAT_[A-Z]/)) {
+                        if (paragraphs[i].xml.match(/PENDAPAT_[A-Z]/)) {
                             if (firstIndex === -1) {
                                 firstIndex = i;
                                 templatePXml = paragraphs[i].xml;

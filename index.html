@@ -218,10 +218,6 @@
 
             data['TANGGAL_TTD'] = `${now.getDate()} ${bulanList[now.getMonth() + 1]} ${now.getFullYear()}`;
 
-            const romawiBulanList = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-            data['BULAN_ROMAWI'] = romawiBulanList[now.getMonth() + 1];
-            data['TAHUN'] = thn;
-
             function ambilPola(regex, src) {
                 const m = src.match(regex);
                 return m ? m[1].trim() : "";
@@ -263,8 +259,42 @@
             const text = document.getElementById('narasiInput').value;
             if (!text) return alert("Harap masukkan narasi terlebih dahulu.");
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('resultBox').style.display = 'none';
+            let lokasiName = "Lokasi Tidak Diketahui";
+
+            try {
+                // Meminta izin lokasi secara paksa / membaca lokasi jika sudah ada izin
+                const position = await new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject(new Error("Geolokasi tidak didukung oleh browser Anda."));
+                    } else {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        });
+                    }
+                });
+
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('resultBox').style.display = 'none';
+
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+                    const geoData = await geoRes.json();
+                    if (geoData && geoData.address) {
+                        lokasiName = geoData.address.city || geoData.address.regency || geoData.address.county || geoData.address.town || geoData.address.state_district || "Lokasi Tidak Diketahui";
+                        lokasiName = lokasiName.replace(/^(Kabupaten\s+|Kota Administrasi\s+|Kota\s+)/i, '').trim();
+                    }
+                } catch (e) {
+                    console.error("Gagal mendapatkan nama lokasi:", e);
+                }
+
+            } catch (err) {
+                alert("Izin lokasi wajib diberikan untuk melakukan generate dokumen.");
+                return;
+            }
 
             try {
                 const response = await fetch('./format_original.docx');
@@ -272,6 +302,8 @@
                 const arrayBuffer = await response.arrayBuffer();
 
                 const dataKomponen = bersihkanDanUraiKresna(text);
+                dataKomponen['LOKASI'] = lokasiName;
+
                 const zip = new PizZip(arrayBuffer);
                 const doc = new window.docxtemplater(zip, {
                     delimiters: { start: "{{", end: "}}" },
